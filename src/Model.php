@@ -71,7 +71,7 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
-     * Determine if the specified response property exists.
+     * Determine if the specified response property is set.
      *
      * @param $property
      * @return bool
@@ -220,20 +220,20 @@ class Model implements ArrayAccess, JsonSerializable
     {
         $response = $this->client->readObject($this->getName(), $key);
 
-        return $this->fresh($response);
+        return empty($response) ? null : $this->fresh($response);
     }
 
     /**
      * Read a related model using the supplied property's value.
      *
      * @param string $property
-     * @param string $model
+     * @param string $modelName
      * @return Model
      */
-    public function related($property, $model = null)
+    public function related($property, $modelName = null)
     {
         if (isset($this->response->$property)) {
-            return $this->client->{$model ?: $property}->read($this->response->$property);
+            return $this->client->{$modelName ?: $property}->read($this->response->$property);
         }
     }
 

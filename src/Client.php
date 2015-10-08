@@ -2,6 +2,7 @@
 
 namespace Pace;
 
+use SoapFault;
 use Pace\Contracts\Soap\Factory as SoapFactory;
 
 class Client
@@ -161,15 +162,22 @@ class Client
      *
      * @param string $name
      * @param mixed $key
-     * @return \stdClass
+     * @return \stdClass|null
+     * @throws SoapFault if an unexpected SOAP error occurs.
      */
     public function readObject($name, $key)
     {
         $method = 'read' . $this->studlyCase($name);
 
-        return $this->soapClient(Client::READ_SERVICE)
-            ->$method([$this->camelCase($name) => [self::PRIMARY_KEY => $key]])
-            ->out;
+        try {
+            return $this->soapClient(Client::READ_SERVICE)
+                ->$method([$this->camelCase($name) => [self::PRIMARY_KEY => $key]])
+                ->out;
+        } catch(SoapFault $e) {
+            if (strpos($e->getMessage(), 'Unable to locate object') !== 0) {
+                throw $e;
+            }
+        }
     }
 
     /**
