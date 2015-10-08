@@ -110,11 +110,7 @@ class Client
      */
     public function __get($name)
     {
-        if (!isset($this->models[$name])) {
-            $this->models[$name] = new Model($this, $name);
-        }
-
-        return $this->models[$name];
+        return $this->model($name);
     }
 
     /**
@@ -155,6 +151,21 @@ class Client
         }
 
         return isset($response->string) ? (array)$response->string : null;
+    }
+
+    /**
+     * Get a model instance.
+     *
+     * @param string $name
+     * @return Model
+     */
+    public function model($name)
+    {
+        if (!isset($this->models[$name])) {
+            $this->models[$name] = new Model($this, $name);
+        }
+
+        return $this->models[$name];
     }
 
     /**
