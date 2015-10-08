@@ -248,7 +248,7 @@ class Builder
      */
     protected function compileNested(array $filter)
     {
-        return sprintf('%s (%s)', $filter['boolean'], $filter['builder']);
+        return sprintf('%s (%s)', $filter['boolean'], $filter['builder']->getXPathFilter());
     }
 
     /**
