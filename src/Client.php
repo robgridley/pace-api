@@ -178,6 +178,12 @@ class Client
      */
     public function readObject($name, $key)
     {
+        // This is intentionally not strict. The API considers an
+        // integer 0 to be null and will respond with a fault.
+        if ($key == null) {
+            return null;
+        }
+
         $method = 'read' . $this->studlyCase($name);
 
         try {
