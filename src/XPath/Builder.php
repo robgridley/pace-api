@@ -252,17 +252,6 @@ class Builder
     }
 
     /**
-     * Escape single quotes in value.
-     *
-     * @param string $value
-     * @return mixed
-     */
-    protected function escapeSingleQuotes($value)
-    {
-        return str_replace('\'', '\\\'', $value);
-    }
-
-    /**
      * Check if an operator is a valid function.
      *
      * @param string $operator
@@ -315,7 +304,7 @@ class Builder
                 return $value ? '\'true\'' : '\'false\'';
 
             default:
-                return '\'' . $this->escapeSingleQuotes($value) . '\'';
+                return "\"$value\"";
         }
     }
 
