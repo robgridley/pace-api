@@ -1,0 +1,4 @@
+suites:
+    api_suite:
+        namespace: Pace
+        psr4_prefix: Pace
