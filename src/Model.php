@@ -2,12 +2,20 @@
 
 namespace Pace;
 
+use Exception;
 use ArrayAccess;
 use JsonSerializable;
 use Pace\XPath\Builder;
 
 class Model implements ArrayAccess, JsonSerializable
 {
+    /**
+     * Camel-cased object type.
+     *
+     * @var string
+     */
+    protected $type;
+
     /**
      * The client instance.
      *
@@ -16,31 +24,41 @@ class Model implements ArrayAccess, JsonSerializable
     protected $client;
 
     /**
-     * Camel-cased model name.
+     * Object containing the model's current properties.
      *
-     * @var string
+     * @var object
      */
-    protected $modelName;
+    protected $object;
 
     /**
-     * The SOAP response object.
+     * Object containing the model's "original" properties.
      *
-     * @var \stdClass
+     * @var object
      */
-    protected $response;
+    protected $original;
+
+    /**
+     * Indicates if this model exists in Pace.
+     *
+     * @var bool
+     */
+    public $exists = false;
 
     /**
      * Create a new model instance.
      *
      * @param Client $client
-     * @param string $modelName
-     * @param \stdClass $response
+     * @param string $type
+     * @param object $object
      */
-    public function __construct(Client $client, $modelName, \stdClass $response = null)
+    public function __construct(Client $client, $type, $object = null)
     {
         $this->client = $client;
-        $this->modelName = $modelName;
-        $this->response = $response;
+        $this->type = $type;
+
+        $this->object = is_null($object) ? new \stdClass() : $object;
+
+        $this->syncOriginal();
     }
 
     /**
@@ -60,36 +78,36 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
-     * Get the specified response property.
+     * Get the specified model property.
      *
      * @param string $property
      * @return mixed
      */
     public function __get($property)
     {
-        return $this->response->$property;
+        return $this->getProperty($property);
     }
 
     /**
-     * Determine if the specified response property is set.
+     * Determine if the specified model property is set.
      *
      * @param $property
      * @return bool
      */
     public function __isset($property)
     {
-        return isset($this->response->$property);
+        return isset($this->object->$property);
     }
 
     /**
-     * Set the specified response property to the supplied value.
+     * Set the specified model property to the supplied value.
      *
      * @param $property
      * @param $value
      */
     public function __set($property, $value)
     {
-        $this->response->$property = $value;
+        $this->object->$property = $value;
     }
 
     /**
@@ -103,13 +121,52 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
-     * Destroy the specified response property.
+     * Destroy the specified model property.
      *
      * @param $property
      */
     public function __unset($property)
     {
-        unset($this->response->$property);
+        unset($this->object->$property);
+    }
+
+    /**
+     * Delete this instance.
+     *
+     * @param string $primaryKey
+     * @return bool|null
+     * @throws Exception if the primary key cannot be read
+     */
+    public function delete($primaryKey = 'id')
+    {
+        if (is_null($this->getProperty($primaryKey))) {
+            throw new Exception('Could not read the primary key.');
+        }
+
+        if ($this->exists) {
+            $this->client->deleteObject($this->getType(), $this->getProperty($primaryKey));
+            $this->exists = false;
+
+            return true;
+        }
+    }
+
+    /**
+     * Persist the current instance as a new \stdClass.
+     *
+     * @param int|string $newPrimaryKey
+     * @return Model|null
+     */
+    public function duplicate($newPrimaryKey = null)
+    {
+        if ($this->exists) {
+            $response = $this->client->cloneObject($this->getType(), $this->object, $this->getDirty(), $newPrimaryKey);
+
+            $instance = $this->newInstance($response);
+            $instance->exists = true;
+
+            return $instance;
+        }
     }
 
     /**
@@ -121,40 +178,37 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function find($filter = null, $sort = null)
     {
-        $keys = $this->client->findObjects($this->getName(), $filter, $sort);
+        $keys = $this->client->findObjects($this->getType(), $filter, $sort);
 
         return $this->newKeyCollection((array)$keys);
     }
 
     /**
-     * Create a new model instance.
+     * Get the object properties which have changed the last sync.
      *
-     * @param \stdClass $response
-     * @return Model
+     * @return object
      */
-    public function fresh(\stdClass $response = null)
+    public function getDirty()
     {
-        return new static($this->client, $this->modelName, $response);
+        return (object)array_diff_assoc((array)$this->object, (array)$this->original);
     }
 
     /**
-     * Get the name of the model.
+     * Get the type of the model.
      *
      * @return string
      */
-    public function getName()
+    public function getType()
     {
-        return $this->modelName;
+        return $this->type;
     }
 
     /**
-     * Get the SOAP response object.
-     *
-     * @return \stdClass
+     * @return bool
      */
-    public function getResponse()
+    public function isDirty()
     {
-        return $this->response;
+        return $this->original !== $this->object;
     }
 
     /**
@@ -164,77 +218,134 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function jsonSerialize()
     {
-        return (array)$this->response;
+        return (array)$this->object;
     }
 
     /**
-     * Determine is the specified response property exists.
+     * Create a new model instance.
+     *
+     * @param object $object
+     * @return Model
+     */
+    public function newInstance($object = null)
+    {
+        return new static($this->client, $this->getType(), $object);
+    }
+
+    /**
+     * Determine is the specified model property exists.
      *
      * @param mixed $property
      * @return bool
      */
     public function offsetExists($property)
     {
-        return property_exists($this->response, $property);
+        return property_exists($this->object, $property);
     }
 
     /**
-     * Get the specified response property.
+     * Get the specified model property.
      *
      * @param mixed $property
      * @return mixed
      */
     public function offsetGet($property)
     {
-        return $this->response->$property;
+        return $this->getProperty($property);
     }
 
     /**
-     * Set the specified response property to the supplied value.
+     * Set the specified model property to the supplied value.
      *
      * @param mixed $property
      * @param mixed $value
      */
     public function offsetSet($property, $value)
     {
-        $this->response->$property = $value;
+        $this->object->$property = $value;
     }
 
     /**
-     * Destroy the specified response property.
+     * Destroy the specified model property.
      *
      * @param mixed $property
      */
     public function offsetUnset($property)
     {
-        unset($this->response->$property);
+        unset($this->object->$property);
     }
 
     /**
      * Read using the specified primary key.
      *
-     * @param $key
+     * @param mixed $key
      * @return Model
      */
     public function read($key)
     {
-        $response = $this->client->readObject($this->getName(), $key);
+        // This is intentionally not strict. The API considers an
+        // integer 0 to be null and will respond with a fault.
+        if ($key == null) {
+            return null;
+        }
 
-        return empty($response) ? null : $this->fresh($response);
+        $response = $this->client->readObject($this->getType(), $key);
+
+        if (empty($response)) {
+            return null;
+        }
+
+        $instance = $this->newInstance($response);
+        $instance->exists = true;
+
+        return $instance;
     }
 
     /**
-     * Read a related model using the supplied property's value.
+     * Read related model using the supplied property's value.
      *
      * @param string $property
-     * @param string $modelName
+     * @param string $model
      * @return Model
      */
-    public function related($property, $modelName = null)
+    public function related($property, $model = null)
     {
-        if (isset($this->response->$property)) {
-            return $this->client->{$modelName ?: $property}->read($this->response->$property);
+        if (!is_null($this->getProperty($property))) {
+            return $this->client->{$model ?: $property}->read($this->getProperty($property));
         }
+    }
+
+    /**
+     * Persist this instance.
+     *
+     * @return Model
+     */
+    public function save()
+    {
+        // If the object already exists in Pace, then update it.
+        if ($this->exists) {
+            $this->object = $this->client->updateObject($this->getType(), $this->object);
+
+        // Otherwise create it in Pace and fill in any default values.
+        } else {
+            $this->object = $this->client->createObject($this->getType(), $this->object);
+            $this->exists = true;
+        }
+
+        $this->syncOriginal();
+
+        return $this;
+    }
+
+    /**
+     * Get the specified property or null if it does not exist.
+     *
+     * @param string $property
+     * @return mixed
+     */
+    protected function getProperty($property)
+    {
+        return property_exists($this->object, $property) ? $this->object->$property : null;
     }
 
     /**
@@ -256,5 +367,13 @@ class Model implements ArrayAccess, JsonSerializable
     protected function newKeyCollection(array $keys)
     {
         return new KeyCollection($this, $keys);
+    }
+
+    /**
+     * Sync the original object properties with the current.
+     */
+    protected function syncOriginal()
+    {
+        $this->original = clone $this->object;
     }
 }

@@ -12,7 +12,7 @@ class Client
      */
     const CREATE_SERVICE = 'CreateObject';
     const DELETE_SERVICE = 'DeleteObject';
-    const DUPLICATE_SERVICE = 'CloneObject';
+    const CLONE_SERVICE = 'CloneObject';
     const FIND_SERVICE = 'FindObjects';
     const READ_SERVICE = 'ReadObject';
     const UPDATE_SERVICE = 'UpdateObject';
@@ -35,11 +35,11 @@ class Client
     const PRIMARY_KEY = 'primaryKey';
 
     /**
-     * Object model names which are not pretty.
+     * Object types which are not pretty.
      *
      * @var array
      */
-    protected $irregularNames = [
+    protected $irregularTypes = [
         'csr' => ['cSR', 'CSR'],
         'glLocation' => ['gLLocation', 'GLLocation'],
         'uomType' => ['uOMType', 'UOMType'],
@@ -56,13 +56,6 @@ class Client
         'uomRange' => ['uOMRange', 'UOMRange'],
         // ...
     ];
-
-    /**
-     * Cached models.
-     *
-     * @var array
-     */
-    protected $models = [];
 
     /**
      * Cached services (SOAP clients).
@@ -97,100 +90,139 @@ class Client
     public function __construct(SoapFactory $soapFactory, $host, $login, $password, $scheme = 'https')
     {
         $soapFactory->setOptions(compact('login', 'password'));
-
         $this->soapFactory = $soapFactory;
+
         $this->url = sprintf('%s://%s/rpc/services/', $scheme, $host);
     }
 
     /**
      * Dynamically get the specified object model.
      *
-     * @param string $name
+     * @param string $type
      * @return Model
      */
-    public function __get($name)
+    public function __get($type)
     {
-        return $this->model($name);
+        return $this->model($type);
     }
 
     /**
-     * Get the camel-cased object model name.
+     * Get the camel-cased object type.
      *
-     * @param string $name
+     * @param string $type
      * @return string
      */
-    public function camelCase($name)
+    public function camelCase($type)
     {
-        if (array_key_exists($name, $this->irregularNames)) {
-            return $this->irregularNames[$name][0];
+        if (array_key_exists($type, $this->irregularTypes)) {
+            return $this->irregularTypes[$type][0];
         }
 
-        return $name;
+        return $type;
+    }
+
+    /**
+     * Clone an object.
+     *
+     * @param string $type
+     * @param object|array $object
+     * @param object|array $newObject
+     * @param string|int $newPrimaryKey
+     * @param object|array $newParent
+     * @return \stdClass
+     */
+    public function cloneObject($type, $object, $newObject, $newPrimaryKey = null, $newParent = null)
+    {
+        $type = $this->studlyCase($type);
+        $method = 'clone' . $type;
+
+        return $this->soapClient(Client::CLONE_SERVICE)->$method([
+            $type => $object,
+            $type . 'AttributesToOverride' => $newObject,
+            'newPrimaryKey' => $newPrimaryKey,
+            'newParent' => $newParent
+        ])->out;
+    }
+
+    /**
+     * Create an object.
+     *
+     * @param string $type
+     * @param object|array $object
+     * @return \stdClass
+     */
+    public function createObject($type, $object)
+    {
+        $method = 'create' . $this->studlyCase($type);
+
+        return $this->soapClient(Client::CREATE_SERVICE)
+            ->$method([$this->camelCase($type) => $object])
+            ->out;
+    }
+
+    /**
+     * Delete an object by its primary key.
+     *
+     * @param string $type
+     * @param int|string $key
+     */
+    public function deleteObject($type, $key)
+    {
+        return $this->soapClient(Client::DELETE_SERVICE)
+            ->deleteObject(['in0' => $this->studlyCase($type), 'in1' => $key]);
     }
 
     /**
      * Find the primary keys for the specified object using a filter and optionally sort.
      *
-     * @param string $name
+     * @param string $type
      * @param string $filter
      * @param array $sort
-     * @return array|null
+     * @return mixed
      */
-    public function findObjects($name, $filter, array $sort = null)
+    public function findObjects($type, $filter, array $sort = null)
     {
-        $name = $this->studlyCase($name);
-
         if (!empty($sort)) {
             $response = $this->soapClient(Client::FIND_SERVICE)
-                ->findAndSort(['in0' => $name, 'in1' => $filter, 'in2' => $sort])
+                ->findAndSort(['in0' => $this->studlyCase($type), 'in1' => $filter, 'in2' => $sort])
                 ->out;
         } else {
             $response = $this->soapClient(Client::FIND_SERVICE)
-                ->find(['in0' => $name, 'in1' => $filter])
+                ->find(['in0' => $this->studlyCase($type), 'in1' => $filter])
                 ->out;
         }
 
-        return isset($response->string) ? (array)$response->string : null;
+        return isset($response->string) ? $response->string : null;
     }
 
     /**
      * Get a model instance.
      *
-     * @param string $name
+     * @param string $type
      * @return Model
      */
-    public function model($name)
+    public function model($type)
     {
-        if (!isset($this->models[$name])) {
-            $this->models[$name] = new Model($this, $name);
-        }
-
-        return $this->models[$name];
+        return new Model($this, $type);
     }
 
     /**
-     * Read the specified object by its primary key.
+     * Read the specified object type by its primary key.
      *
-     * @param string $name
+     * @param string $type
      * @param mixed $key
      * @return \stdClass|null
      * @throws SoapFault if an unexpected SOAP error occurs.
      */
-    public function readObject($name, $key)
+    public function readObject($type, $key)
     {
-        // This is intentionally not strict. The API considers an
-        // integer 0 to be null and will respond with a fault.
-        if ($key == null) {
-            return null;
-        }
-
-        $method = 'read' . $this->studlyCase($name);
+        $method = 'read' . $this->studlyCase($type);
 
         try {
             return $this->soapClient(Client::READ_SERVICE)
-                ->$method([$this->camelCase($name) => [self::PRIMARY_KEY => $key]])
+                ->$method([$this->camelCase($type) => [self::PRIMARY_KEY => $key]])
                 ->out;
-        } catch(SoapFault $e) {
+        } catch (SoapFault $e) {
             if (strpos($e->getMessage(), 'Unable to locate object') !== 0) {
                 throw $e;
             }
@@ -213,18 +245,34 @@ class Client
     }
 
     /**
-     * Get the studly-cased object model name.
+     * Get the studly-cased object type.
      *
-     * @param string $name
+     * @param string $type
      * @return string
      */
-    public function studlyCase($name)
+    public function studlyCase($type)
     {
-        if (array_key_exists($name, $this->irregularNames)) {
-            return $this->irregularNames[$name][1];
+        if (array_key_exists($type, $this->irregularTypes)) {
+            return $this->irregularTypes[$type][1];
         }
 
-        return ucfirst($name);
+        return ucfirst($type);
+    }
+
+    /**
+     * Update an object.
+     *
+     * @param string $type
+     * @param \stdClass|array $object
+     * @return mixed
+     */
+    public function updateObject($type, $object)
+    {
+        $method = 'update' . $this->studlyCase($type);
+
+        return $this->soapClient(Client::UPDATE_SERVICE)
+            ->$method([$this->camelCase($type) => $object])
+            ->out;
     }
 
     /**
