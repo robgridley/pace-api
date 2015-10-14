@@ -17,21 +17,21 @@ class Model implements ArrayAccess, JsonSerializable
     protected $type;
 
     /**
-     * The client instance.
+     * The web service client instance.
      *
      * @var Client
      */
     protected $client;
 
     /**
-     * Object containing the model's current properties.
+     * The object containing the model's current properties.
      *
      * @var object
      */
     protected $object;
 
     /**
-     * Object containing the model's "original" properties.
+     * The object containing the model's original properties.
      *
      * @var object
      */
@@ -91,7 +91,7 @@ class Model implements ArrayAccess, JsonSerializable
     /**
      * Determine if the specified model property is set.
      *
-     * @param $property
+     * @param string $property
      * @return bool
      */
     public function __isset($property)
@@ -102,8 +102,8 @@ class Model implements ArrayAccess, JsonSerializable
     /**
      * Set the specified model property to the supplied value.
      *
-     * @param $property
-     * @param $value
+     * @param string $property
+     * @param mixed $value
      */
     public function __set($property, $value)
     {
@@ -123,7 +123,7 @@ class Model implements ArrayAccess, JsonSerializable
     /**
      * Destroy the specified model property.
      *
-     * @param $property
+     * @param string $property
      */
     public function __unset($property)
     {
@@ -131,7 +131,7 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
-     * Delete this instance.
+     * Delete the model from the web service.
      *
      * @param string $primaryKey
      * @return bool|null
@@ -152,7 +152,7 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
-     * Persist the current instance as a new \stdClass.
+     * Persist the model in the web service as a duplicate and restore the model's properties.
      *
      * @param int|string $newPrimaryKey
      * @return Model|null
@@ -165,12 +165,14 @@ class Model implements ArrayAccess, JsonSerializable
             $instance = $this->newInstance($response);
             $instance->exists = true;
 
+            $this->restore();
+
             return $instance;
         }
     }
 
     /**
-     * Find the primary keys using a filter and optionally sort.
+     * Find primary keys in the web service using a filter (and optionally sort).
      *
      * @param string $filter
      * @param array $sort
@@ -184,7 +186,7 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
-     * Get the object properties which have changed the last sync.
+     * Get the object properties which have changed since the last sync.
      *
      * @return object
      */
@@ -204,6 +206,8 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
+     * Determine if the model has changed since the last sync.
+     *
      * @return bool
      */
     public function isDirty()
@@ -212,7 +216,7 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
-     * Convert this instance to a serializable array.
+     * Convert the model to a serializable array.
      *
      * @return array
      */
@@ -235,7 +239,7 @@ class Model implements ArrayAccess, JsonSerializable
     /**
      * Determine is the specified model property exists.
      *
-     * @param mixed $property
+     * @param string $property
      * @return bool
      */
     public function offsetExists($property)
@@ -246,7 +250,7 @@ class Model implements ArrayAccess, JsonSerializable
     /**
      * Get the specified model property.
      *
-     * @param mixed $property
+     * @param string $property
      * @return mixed
      */
     public function offsetGet($property)
@@ -257,7 +261,7 @@ class Model implements ArrayAccess, JsonSerializable
     /**
      * Set the specified model property to the supplied value.
      *
-     * @param mixed $property
+     * @param string $property
      * @param mixed $value
      */
     public function offsetSet($property, $value)
@@ -268,7 +272,7 @@ class Model implements ArrayAccess, JsonSerializable
     /**
      * Destroy the specified model property.
      *
-     * @param mixed $property
+     * @param string $property
      */
     public function offsetUnset($property)
     {
@@ -276,9 +280,9 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
-     * Read using the specified primary key.
+     * Read a new model from the web service using the specified primary key.
      *
-     * @param mixed $key
+     * @param int|string $key
      * @return Model
      */
     public function read($key)
@@ -302,7 +306,7 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
-     * Read related model using the supplied property's value.
+     * Read a related model from the web service using the supplied property's value.
      *
      * @param string $property
      * @param string $model
@@ -316,7 +320,7 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
-     * Persist this instance.
+     * Persist the model in the web service.
      *
      * @return Model
      */
@@ -367,6 +371,14 @@ class Model implements ArrayAccess, JsonSerializable
     protected function newKeyCollection(array $keys)
     {
         return new KeyCollection($this, $keys);
+    }
+
+    /**
+     * Restore the current model properties from the original.
+     */
+    protected function restore()
+    {
+        $this->object = clone $this->original;
     }
 
     /**

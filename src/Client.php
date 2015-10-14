@@ -54,7 +54,7 @@ class Client
         'uom' => ['uOM', 'UOM'],
         'jmfReceivedMessageTransaction' => ['jMFReceivedMessageTransaction', 'JMFReceivedMessageTransaction'],
         'uomRange' => ['uOMRange', 'UOMRange'],
-        // ...
+        // TODO: finish this list.
     ];
 
     /**
@@ -96,7 +96,7 @@ class Client
     }
 
     /**
-     * Dynamically get the specified object model.
+     * Dynamically retrieve the specified model.
      *
      * @param string $type
      * @return Model
@@ -173,7 +173,7 @@ class Client
     }
 
     /**
-     * Find the primary keys for the specified object using a filter and optionally sort.
+     * Find primary keys for the specified object using a filter (and optionally sort).
      *
      * @param string $type
      * @param string $filter
