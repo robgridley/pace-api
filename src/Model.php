@@ -6,6 +6,7 @@ use Exception;
 use ArrayAccess;
 use JsonSerializable;
 use Pace\XPath\Builder;
+use Doctrine\Common\Inflector\Inflector;
 
 class Model implements ArrayAccess, JsonSerializable
 {
@@ -131,6 +132,28 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
+     * Fetch a "belongs to" relationship.
+     *
+     * @param string $relatedModel
+     * @param string $property
+     * @return Model|null
+     */
+    public function belongsTo($relatedModel, $property = null)
+    {
+        // If no property has been specified, assume the it
+        // has the same name as the related model type.
+        if ($property == null) {
+            $property = $relatedModel;
+        }
+
+        $foreignKey = $this->getProperty($property);
+
+        if ($foreignKey != null) {
+            return $this->client->$relatedModel->read($foreignKey);
+        }
+    }
+
+    /**
      * Delete the model from the web service.
      *
      * @param string $primaryKey
@@ -139,12 +162,14 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function delete($primaryKey = 'id')
     {
-        if (is_null($this->getProperty($primaryKey))) {
+        $key = $this->getProperty($primaryKey);
+
+        if ($key == null) {
             throw new Exception('Could not read the primary key.');
         }
 
         if ($this->exists) {
-            $this->client->deleteObject($this->getType(), $this->getProperty($primaryKey));
+            $this->client->deleteObject($this->getType(), $key);
             $this->exists = false;
 
             return true;
@@ -206,6 +231,33 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
+     * Fetch a "has many" relationship.
+     *
+     * @param string $relatedModel
+     * @param string $property
+     * @param string $primaryKey
+     * @return KeyCollection
+     * @throws Exception if the primary key cannot be read
+     */
+    public function hasMany($relatedModel, $property = null, $primaryKey = 'id')
+    {
+        $key = $this->getProperty($primaryKey);
+
+        if ($key == null) {
+            throw new Exception('Could not read the primary key.');
+        }
+
+        // If no property has been specified, assume the related model is
+        // plural and the property has the same name as the model type.
+        if ($property == null) {
+            $relatedModel = Inflector::singularize($relatedModel);
+            $property = $this->getType();
+        }
+
+        return $this->client->$relatedModel->filter('@' . $property, $key)->find();
+    }
+
+    /**
      * Determine if the model has changed since the last sync.
      *
      * @return bool
@@ -244,7 +296,7 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function offsetExists($property)
     {
-        return property_exists($this->object, $property);
+        return $this->hasProperty($property);
     }
 
     /**
@@ -306,17 +358,18 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
-     * Read a related model from the web service using the supplied property's value.
+     * Auto-magically fetch related model(s).
      *
-     * @param string $property
-     * @param string $model
-     * @return Model
+     * @param string $type
+     * @return KeyCollection|Model|null
      */
-    public function related($property, $model = null)
+    public function related($type)
     {
-        if (!is_null($this->getProperty($property))) {
-            return $this->client->{$model ?: $property}->read($this->getProperty($property));
+        if ($this->hasProperty($type)) {
+            return $this->belongsTo($type);
         }
+
+        return $this->hasMany($type);
     }
 
     /**
@@ -350,6 +403,17 @@ class Model implements ArrayAccess, JsonSerializable
     protected function getProperty($property)
     {
         return property_exists($this->object, $property) ? $this->object->$property : null;
+    }
+
+    /**
+     * Determine if the specified property exists.
+     *
+     * @param string $property
+     * @return bool
+     */
+    protected function hasProperty($property)
+    {
+        return property_exists($this->object, $property);
     }
 
     /**
