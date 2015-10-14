@@ -101,14 +101,14 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
-     * Set the specified model property to the supplied value.
+     * Dynamically set the specified model property to the supplied value.
      *
      * @param string $property
      * @param mixed $value
      */
     public function __set($property, $value)
     {
-        $this->object->$property = $value;
+        $this->setProperty($property, $value);
     }
 
     /**
@@ -160,14 +160,8 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function delete($primaryKey = 'id')
     {
-        $key = $this->getProperty($primaryKey);
-
-        if ($key == null) {
-            throw new Exception('Could not read the primary key.');
-        }
-
         if ($this->exists) {
-            $this->client->deleteObject($this->getType(), $key);
+            $this->client->deleteObject($this->getType(), $this->key($primaryKey));
             $this->exists = false;
 
             return true;
@@ -239,12 +233,6 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function hasMany($relatedModel, $property = null, $primaryKey = 'id')
     {
-        $key = $this->getProperty($primaryKey);
-
-        if ($key == null) {
-            throw new Exception('Could not read the primary key.');
-        }
-
         // If no property has been specified, assume the related model is
         // plural and the property has the same name as the model type.
         if ($property == null) {
@@ -252,7 +240,7 @@ class Model implements ArrayAccess, JsonSerializable
             $property = $this->getType();
         }
 
-        return $this->client->$relatedModel->filter('@' . $property, $key)->find();
+        return $this->client->$relatedModel->filter('@' . $property, $this->key($primaryKey))->find();
     }
 
     /**
@@ -273,6 +261,24 @@ class Model implements ArrayAccess, JsonSerializable
     public function jsonSerialize()
     {
         return (array)$this->object;
+    }
+
+    /**
+     * Get the model's primary key.
+     *
+     * @param string $primaryKey
+     * @return mixed
+     * @throws Exception if the primary key cannot be read
+     */
+    public function key($primaryKey = 'id')
+    {
+        $key = $this->getProperty($primaryKey);
+
+        if ($key == null) {
+            throw new Exception('Could not read the primary key.');
+        }
+
+        return $key;
     }
 
     /**
@@ -316,7 +322,7 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function offsetSet($property, $value)
     {
-        $this->object->$property = $value;
+        $this->setProperty($property, $value);
     }
 
     /**
@@ -377,12 +383,12 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function save()
     {
-        // If the object already exists in Pace, then update it.
         if ($this->exists) {
+            // Update an existing object in Pace.
             $this->object = $this->client->updateObject($this->getType(), $this->object);
 
-        // Otherwise create it in Pace and fill in any default values.
         } else {
+            // Create a new object in Pace and fill default values.
             $this->object = $this->client->createObject($this->getType(), $this->object);
             $this->exists = true;
         }
@@ -441,6 +447,22 @@ class Model implements ArrayAccess, JsonSerializable
     protected function restore()
     {
         $this->object = clone $this->original;
+    }
+
+    /**
+     * Set the specified model property to the supplied value.
+     *
+     * @param string $property
+     * @param mixed $value
+     */
+    protected function setProperty($property, $value)
+    {
+        // Check to see if the value is a related model.
+        if ($value instanceof self) {
+            $value = $value->key();
+        }
+
+        $this->object->$property = $value;
     }
 
     /**
