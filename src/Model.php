@@ -148,9 +148,7 @@ class Model implements ArrayAccess, JsonSerializable
 
         $foreignKey = $this->getProperty($property);
 
-        if ($foreignKey != null) {
-            return $this->client->$relatedModel->read($foreignKey);
-        }
+        return $this->client->$relatedModel->read($foreignKey);
     }
 
     /**
