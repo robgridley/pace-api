@@ -5,6 +5,7 @@ namespace Pace\XPath;
 use Closure;
 use Pace\Model;
 use Carbon\Carbon;
+use InvalidArgumentException;
 
 class Builder
 {
@@ -93,8 +94,12 @@ class Builder
             return $this->nestedFilter($xpath, $boolean);
         }
 
-        if (!$this->isOperator($operator) && !$this->isFunction($operator)) {
+        if ($value === null && !$this->isOperator($operator)) {
             list($value, $operator) = [$operator, '='];
+        }
+
+        if (!$this->isOperator($operator) && !$this->isFunction($operator)) {
+            throw new InvalidArgumentException("Operator '$operator' is not supported");
         }
 
         $this->filters[] = compact('xpath', 'operator', 'value', 'boolean');
