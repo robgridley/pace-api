@@ -49,7 +49,7 @@ $csr->save();
 
 ```php
 $csr = $pace->csr->read(1);
-echo $csr->email; // prints "joeybats@bluejays.com"
+echo $csr->email; // print "joeybats@bluejays.com"
 ```
 
 ### Updating an object
@@ -71,8 +71,8 @@ The duplicate() method accepts one optional argument: a new primary key value. I
 $csr->name = 'Adam Lind';
 $newCsr = $csr->duplicate();
 
-echo $csr->name; // prints "Jose Bautista"
-echo $newCsr->name; // prints "Adam Lind"
+echo $csr->name; // print "Jose Bautista"
+echo $newCsr->name; // print "Adam Lind"
 ```
 
 ### Deleting an object
@@ -80,7 +80,7 @@ echo $newCsr->name; // prints "Adam Lind"
 The delete() method accepts one optional argument: the name of the primary key for the model. It defaults to 'id', which is correct in most cases.
 
 ```php
-$newCsr->delete(); // Delete "Adam Lind"
+$newCsr->delete(); // delete "Adam Lind"
 ```
 
 ## Finding objects
@@ -127,7 +127,11 @@ As you can see, passing a closure creates a nested set of conditions.
 Use the sort() method to sort your results. You'll need to supply an XPath expression and an optional direction boolean. The default is false (ascending).
 
 ```php
-$jobs = $pace->job->filter('adminStatus/@openJob', true)->sort('customer/@custName')->sort('@job', true)->find();
+$jobs = $pace->job
+	->filter('adminStatus/@openJob', true)
+	->sort('customer/@custName')
+	->sort('@job', true)
+	->find();
 ```
 
 ## Dates
@@ -151,7 +155,8 @@ foreach ($estimates as $estimate) {
 KeyCollection also has a number of useful methods such as all(), paginate() and first().
 
 ```php
-echo $pace->csr->filter('@name', 'Josh Donaldson')->find()->first()->email; // prints 'bringerofrain@bluejays.com'
+// print 'bringerofrain@bluejays.com'
+echo $pace->csr->filter('@name', 'Josh Donaldson')->find()->first()->email;
 ```
 
 ## Relationships
