@@ -224,7 +224,7 @@ class Builder
      */
     protected function compileFilter(array $filter)
     {
-        return sprintf('%s %s%s%s',
+        return sprintf('%s %s %s %s',
             $filter['boolean'], $filter['xpath'], $filter['operator'], $this->value($filter['value']));
     }
 
@@ -316,6 +316,6 @@ class Builder
      */
     protected function wrapDate(Carbon $value)
     {
-        return sprintf('date(%s, %s, %s)', $value->year, $value->month, $value->day);
+        return sprintf('date(%d, %d, %d)', $value->year, $value->month, $value->day);
     }
 }
