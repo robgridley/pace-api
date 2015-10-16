@@ -1,8 +1,8 @@
 # Pace API Client
 
-An unofficial PHP client library for EFI Pace's SOAP API. This version is still being actively developed and should not be considered stable.
+An unofficial PHP client library for EFI Pace's SOAP API, created by a Pace administator and PHP developer. This library makes make some assumptions about convention to make your life just a little bit easier.
 
-The library makes some assumptions about convention in order to make your life easier.
+This version is still being actively developed, and thus should not be considered stable, although the author is using it for several production projects.
 
 ## Installation
 
@@ -35,44 +35,52 @@ $pace = new Pace(new SoapFactory(), 'epace-staging.domain.com', 'apiuser', 'apip
 
 ### Creating an object
 
-To create an object you need an instance of the model from the Pace client. You can do this using the model() method or a dynamic property.
+To create a new object in Pace, get a model from the Pace client, set its properties, then call the save() method. You can retrieve a model instance by calling the model() method or using a dynamic property.
 
 ```php
+$csr = $pace->model('csr');
+// or the shorter, prettier:
 $csr = $pace->csr;
 
-$csr->name = 'Jose Bautista';
-$csr->email = 'joeybats@bluejays.com';
+$csr->name = 'John Smith';
+$csr->email = 'jsmith@domain.com';
 $csr->save();
 ```
 
 ### Reading an object
 
+You can read an object by its primary key, which will return a single model.
+
 ```php
 $csr = $pace->csr->read(1);
-echo $csr->email; // print "joeybats@bluejays.com"
+
+echo $csr->email; // prints "jsmith@domain.com"
 ```
 
 ### Updating an object
 
+In addition to creating objects, the save() method is used to update existing objects.
+
 ```php
-$csr->note = "Blue Jays got me thinking '92, and I love it.";
-$csr->note .= "\n";
-$csr->note .= "https://youtu.be/j3LV9wFQyzU";
+$csr = $pace->csr->read(1);
+
+$csr->active = false;
 $csr->save();
 ```
 
 ### Duplicating an object
 
-You can duplicate an existing model by modifying its properties (if needed) and calling the duplicate() method. The duplicate() method will return a new model instance and restore the existing model to its original state.
+To duplicate an existing object, first load an existing object, optionally modify its properties, then call the duplicate() method. A new model instance will be returned and the existing model will be restored to its original state.
 
-The duplicate() method accepts one optional argument: a new primary key value. If you do not supply a primary key, Pace will automatically pick the next available increment.
+The duplicate() method accepts one optional argument: a new primary key value. If you do not supply a primary key, Pace will automatically increment in most cases.
 
 ```php
-$csr->name = 'Adam Lind';
+$csr = $pace->csr->read(1);
+$csr->name = 'Jane Smith';
 $newCsr = $csr->duplicate();
 
-echo $csr->name; // print "Jose Bautista"
-echo $newCsr->name; // print "Adam Lind"
+echo $csr->name; // prints "John Smith"
+echo $newCsr->name; // prints "Jane Smith"
 ```
 
 ### Deleting an object
@@ -80,21 +88,34 @@ echo $newCsr->name; // print "Adam Lind"
 The delete() method accepts one optional argument: the name of the primary key for the model. It defaults to 'id', which is correct in most cases.
 
 ```php
-$newCsr->delete(); // delete "Adam Lind"
+$csr = $pace->csr->read(1);
+$csr->delete();
 ```
 
 ## Finding objects
 
 ### Basics
 
-You can search for objects in Pace using XPath expressions. The included XPath builder class takes care of converting PHP native types.
+Pace's web service uses XPath expressions to find objects. The included XPath\Builder class takes care of converting PHP native types and makes your filters more readable (in a PHP editor, anyway).
 
-You may chain as many conditions as you need.
+#### Finding mutiple objects
 
 ```php
-$jobs = $pace->job->filter('adminStatus/@openJob', true)
-	->filter('@jobType', 1)->find();
+$jobs = $pace->job
+	->filter('adminStatus/@openJob', true)
+	->filter('@jobType', 1)
+	->find();
 ```
+
+The above returns a collection of models.
+
+#### Finding a single object
+
+```php
+echo $pace->csr->filter('@name', 'Jane Smith')->first();
+```
+
+The above returns a single model instance.
 
 ### Operators
 
@@ -106,7 +127,7 @@ $millionPlus = $pace->salesPerson->filter('@annualQuota', '>=', 1000000)->find()
 $coated = $pace->inventoryItem->contains('@description', 'C2S')->find();
 ```
 
-### Nested filters
+### Grouped filters
 
 Sometimes you may need to group filters to create more complex conditions.
 
@@ -124,7 +145,7 @@ As you can see, passing a closure creates a nested set of conditions.
 
 ### Sorting
 
-Use the sort() method to sort your results. You'll need to supply an XPath expression and an optional direction boolean. The default is false (ascending).
+Use the sort() method to sort your results. The sort() method accepts two arguments: an XPath expression identifying the field to sort on and a boolean to determine the direction, which has a default value of false (ascending). You can chain as many sorts as needed, although I'm not sure if Pace has a limit.
 
 ```php
 $jobs = $pace->job
@@ -136,28 +157,26 @@ $jobs = $pace->job
 
 ## Dates
 
-Dates are automatically converted to and from [Carbon](http://carbon.nesbot.com/) instances.
+Dates are automatically converted to and from [Carbon](http://carbon.nesbot.com/) instances. Check out the Soap\DateTimeMapper and Soap\Factory classes if you want to see how this happens.
 
 ## Key Collections
 
-The raw result of a 'findObjects' SOAP call is an array of primary keys. The library wraps that array in a KeyCollection object to provide you with a bunch of conveniences, and prevent unnecessary calls to the 'readObject' service by only loading models as they're needed.
+The raw result of a find objects SOAP call is an array of primary keys. The model class automatically wraps that array in a KeyCollection object to provide you with a bunch of conveniences, and to prevent unnecessary calls to the read object service by only loading models as they're needed.
 
-You can loop over a KeyCollection like an array. Each model will be loaded as you interate over it. If you break out of the loop, the remaining models will never have been loaded.
+You can loop over a KeyCollection like an array. Each model will be loaded as you interate over it, so if for example you break out of the loop, the remaining models will never have been loaded.
 
 ```php
 $estimates = $pace->estimate->filter('@entryDate', '>=', Carbon::yesterday())->find();
 
 foreach ($estimates as $estimate) {
-	echo $estimate->enteredBy;
+	if ($estimate->enteredBy == 'jsmith') {
+		echo "John has entered an estimate since yesterday!"
+		break;
+	}
 }
 ```
 
-KeyCollection also has a number of useful methods such as all(), paginate() and first().
-
-```php
-// print 'bringerofrain@bluejays.com'
-echo $pace->csr->filter('@name', 'Josh Donaldson')->find()->first()->email;
-```
+KeyCollection also has a number of useful methods such as all(), paginate() and first(). In fact, the single object find example from earlier is just a shortcut to KeyCollection's first() method.
 
 ## Relationships
 
@@ -165,17 +184,18 @@ echo $pace->csr->filter('@name', 'Josh Donaldson')->find()->first()->email;
 
 You can load related models automatically via dynamic methods.
 
-For a "belongs to" relationship, the model property name and foreign model type need to match. For example, the customer object has a property named 'csr' which contains the primary key for the 'csr' object type.
+For a "belongs to" relationship, the model property name and foreign model type must match. For example, the customer object has a property named 'csr', which contains the primary key for the 'csr' object type.
 
 ```php
 $customer = $pace->customer->read('HOUSE');
-echo $customer->csr()->name;
+$houseCsr = $customer->csr();
 ```
 
-To load "has many" related models, call the plural of the foreign model's type. It is assumed that the model has a primary key of 'id' and the foreign model stores this key in a propery named after the parent model's type. For example, the 'job' object stores the 'customer' object's primary key in a property named 'customer'.
+To load "has many" related models, call the plural of the foreign model's type. It is assumed that the model has a primary key of 'id', and the foreign model stores this key in a propery named after the parent model's type. For example, the 'job' object stores the 'customer' object's primary key in a property named 'customer'.
 
 ```php
-$jobs = $customer->jobs();
+$customer = $pace->customer->read('HOUSE');
+$houseJobs = $customer->jobs();
 ```
 
 If you find an object which flies in the face of convention, you can call the public belongsTo() and hasMany() methods directly.
@@ -197,5 +217,6 @@ $line->inventoryBatch = $batch;
 Both the Model and KeyCollection classes implemement JsonSerializable and casting either class to a string will generate JSON.
 
 ```php
-echo $customer; // prints a JSON representation of the customer model
+// print a JSON representation of the House account
+echo $pace->customer->read('HOUSE');
 ```

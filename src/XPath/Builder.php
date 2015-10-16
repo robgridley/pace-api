@@ -118,6 +118,16 @@ class Builder
     }
 
     /**
+     * A shortcut to KeyCollection's first() method.
+     *
+     * @return mixed
+     */
+    public function first()
+    {
+        return $this->find()->first();
+    }
+
+    /**
      * Add a nested filter using a callback.
      *
      * @param Closure $callback
