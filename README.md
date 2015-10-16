@@ -20,6 +20,11 @@ To install via [Composer](http://getcomposer.org/) add the following to your pro
 }
 ```
 
+## To-dos
+
+* Write more tests
+* Implement remaining Pace services (e.g. "InvokeProcess")
+
 ## Configuration
 
 You'll need to create a Pace system user with "Allow remote API usage" enabled.
@@ -112,7 +117,7 @@ The above returns a collection of models.
 #### Finding a single object
 
 ```php
-echo $pace->csr->filter('@name', 'Jane Smith')->first();
+$csr = $pace->csr->filter('@name', 'Jane Smith')->first();
 ```
 
 The above returns a single model instance.
