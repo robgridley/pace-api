@@ -45,7 +45,9 @@ class BuilderSpec extends ObjectBehavior
 
     function it_supports_the_contains_function()
     {
-        $this->contains('@twitter', 'bats')->getXPathFilter()->shouldReturn('contains(@twitter, "bats")');
+        $this->contains('@twitter', 'bringerofrain')
+            ->getXPathFilter()
+            ->shouldReturn('contains(@twitter, "bringerofrain")');
     }
 
     function it_supports_the_starts_with_function()
@@ -56,7 +58,7 @@ class BuilderSpec extends ObjectBehavior
 
     function it_converts_carbon_instances_to_xpath_dates()
     {
-        date_default_timezone_set('America/Toronto'); // Prevent potential errors
+        date_default_timezone_set('America/Toronto'); // Prevent warnings
 
         $this->filter('@clinchedDivision', Carbon::createFromDate(2015, 9, 30))
             ->getXPathFilter()
@@ -92,5 +94,24 @@ class BuilderSpec extends ObjectBehavior
                 '(@pitcher = "David Price" and @catcher = "Dioner Navarro") ' .
                 'or (@pitcher = "R.A. Dickey" and @catcher = "Russell Martin")'
             );
+    }
+
+    function it_sorts_in_ascending_order()
+    {
+        $this->sort('@era')->getXPathSort()->shouldReturn([
+            'XPathDataSort' => [
+                ['xpath' => '@era', 'descending' => false]
+            ]
+        ]);
+    }
+
+    function it_allows_descending_order_to_be_specified_per_sort()
+    {
+        $this->sort('@ab')->sort('@hr', true)->getXPathSort()->shouldReturn([
+            'XPathDataSort' => [
+                ['xpath' => '@ab', 'descending' => false],
+                ['xpath' => '@hr', 'descending' => true]
+            ]
+        ]);
     }
 }
