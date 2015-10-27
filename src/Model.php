@@ -75,7 +75,7 @@ class Model implements ArrayAccess, JsonSerializable
             return $this->related($method);
         }
 
-        return $this->newBuilder()->$method(...$arguments);
+        return call_user_func_array([$this->newBuilder(), $method], $arguments);
     }
 
     /**
