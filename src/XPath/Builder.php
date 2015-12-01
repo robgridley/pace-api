@@ -6,6 +6,7 @@ use Closure;
 use Pace\Model;
 use Carbon\Carbon;
 use InvalidArgumentException;
+use Pace\ModelNotFoundException;
 
 class Builder
 {
@@ -118,13 +119,40 @@ class Builder
     }
 
     /**
-     * A shortcut to KeyCollection's first() method.
+     * Get the first matching model.
      *
-     * @return mixed
+     * @return Model|null
      */
     public function first()
     {
         return $this->find()->first();
+    }
+
+    /**
+     * Get the first matching model or throw an exception.
+     *
+     * @return Model
+     * @throws ModelNotFoundException
+     */
+    public function firstOrFail()
+    {
+        $result = $this->first();
+
+        if (is_null($result)) {
+            throw new ModelNotFoundException("No filtered results for model [{$this->model->getType()}].");
+        }
+
+        return $result;
+    }
+
+    /**
+     * A more "Eloquent" alias for find().
+     *
+     * @return mixed
+     */
+    public function get()
+    {
+        return $this->find();
     }
 
     /**

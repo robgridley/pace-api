@@ -362,6 +362,24 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
+     * Read a new model from the web service using the specified primary key or throw an exception.
+     *
+     * @param int|string $key
+     * @return Model
+     * @throws ModelNotFoundException
+     */
+    public function readOrFail($key)
+    {
+        $result = $this->read($key);
+
+        if (is_null($result)) {
+            throw new ModelNotFoundException("$this->type [$key] does not exist.");
+        }
+
+        return $result;
+    }
+
+    /**
      * Auto-magically fetch related model(s).
      *
      * @param string $type
