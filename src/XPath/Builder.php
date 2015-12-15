@@ -146,6 +146,16 @@ class Builder
     }
 
     /**
+     * Get the first matching model or a new instance.
+     *
+     * @return Model
+     */
+    public function firstOrNew()
+    {
+        return $this->first() ?: $this->model->newInstance();
+    }
+
+    /**
      * A more "Eloquent" alias for find().
      *
      * @return mixed
