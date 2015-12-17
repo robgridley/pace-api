@@ -97,7 +97,7 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function __isset($property)
     {
-        return isset($this->object->$property);
+        return $this->getProperty($property) !== null;
     }
 
     /**
@@ -424,7 +424,15 @@ class Model implements ArrayAccess, JsonSerializable
      */
     protected function getProperty($property)
     {
-        return property_exists($this->object, $property) ? $this->object->$property : null;
+        // First, check if the field exists.
+        if (property_exists($this->object, $property)) {
+            return $this->object->$property;
+        }
+
+        // Next, check if a user defined field exists.
+        if (property_exists($this->object, "U_$property")) {
+            return $this->object->{"U_$property"};
+        }
     }
 
     /**
@@ -435,7 +443,7 @@ class Model implements ArrayAccess, JsonSerializable
      */
     protected function hasProperty($property)
     {
-        return property_exists($this->object, $property);
+        return property_exists($this->object, $property) || property_exists($this->object, "U_$property");
     }
 
     /**
