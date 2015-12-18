@@ -35,53 +35,6 @@ class Client
     const PRIMARY_KEY = 'primaryKey';
 
     /**
-     * Object types which are not pretty.
-     *
-     * @var array
-     */
-    protected $irregularTypes = [
-        'apSetup' => ['aPSetup', 'APSetup'],
-        'arSetup' => ['aRSetup', 'ARSetup'],
-        'crmSetup' => ['cRMSetup', 'CRMSetup'],
-        'crmStatus' => ['cRMStatus', 'CRMStatus'],
-        'crmUser' => ['cRMUser', 'CRMUser'],
-        'csr' => ['cSR', 'CSR'],
-        'dsfMediaSize' => ['dSFMediaSize', 'DSFMediaSize'],
-        'dsfOrderStatus' => ['dSFOrderStatus', 'DSFOrderStatus'],
-        'faSetup' => ['fASetup', 'FASetup'],
-        'glAccount' => ['gLAccount', 'GLAccount'],
-        'glAccountBalance' => ['gLAccountBalance', 'GLAccountBalance'],
-        'glAccountBalanceSummary' => ['gLAccountBalanceSummary', 'GLAccountBalanceSummary'],
-        'glAccountBudget' => ['gLAccountBudget', 'GLAccountBudget'],
-        'glAccountingPeriod' => ['gLAccountingPeriod', 'GLAccountingPeriod'],
-        'glBatch' => ['gLBatch', 'GLBatch'],
-        'glDepartment' => ['gLDepartment', 'GLDepartment'],
-        'glDepartmentLocation' => ['gLDepartmentLocation', 'GLDepartmentLocation'],
-        'glJournalEntry' => ['gLJournalEntry', 'GLJournalEntry'],
-        'glJournalEntryAudit' => ['gLJournalEntryAudit', 'GLJournalEntryAudit'],
-        'glLocation' => ['gLLocation', 'GLLocation'],
-        'glRegisterNumber' => ['gLRegisterNumber', 'GLRegisterNumber'],
-        'glSchedule' => ['gLSchedule', 'GLSchedule'],
-        'glScheduleLine' => ['gLScheduleLine', 'GLScheduleLine'],
-        'glSetup' => ['gLSetup', 'GLSetup'],
-        'glSplit' => ['gLSplit', 'GLSplit'],
-        'glSummaryName' => ['gLSummaryName', 'GLSummaryName'],
-        'jmfReceivedMessage' => ['jMFReceivedMessage', 'JMFReceivedMessage'],
-        'jmfReceivedMessagePartition' => ['jMFReceivedMessagePartition', 'JMFReceivedMessagePartition'],
-        'jmfReceivedMessageTransaction' => ['jMFReceivedMessageTransaction', 'JMFReceivedMessageTransaction'],
-        'jmfReceivedMessageTransactionPartition' => ['jMFReceivedMessageTransactionPartition', 'JMFReceivedMessageTransactionPartition'],
-        'poSetup' => ['pOSetup', 'POSetup'],
-        'poStatus' => ['pOStatus', 'POStatus'],
-        'rssChannel' => ['rSSChannel', 'RSSChannel'],
-        'uom' => ['uOM', 'UOM'],
-        'uomDimension' => ['uOMDimension', 'UOMDimension'],
-        'uomRange' => ['uOMRange', 'UOMRange'],
-        'uomSetup' => ['uOMSetup', 'UOMSetup'],
-        'uomType' => ['uOMType', 'UOMType'],
-        'wipCategory' => ['wIPCategory', 'WIPCategory']
-    ];
-
-    /**
      * Cached services (SOAP clients).
      *
      * @var array
@@ -122,46 +75,30 @@ class Client
     /**
      * Dynamically retrieve the specified model.
      *
-     * @param string $type
+     * @param string $name
      * @return Model
      */
-    public function __get($type)
+    public function __get($name)
     {
-        return $this->model($type);
-    }
-
-    /**
-     * Get the camel-cased object type.
-     *
-     * @param string $type
-     * @return string
-     */
-    public function camelCase($type)
-    {
-        if (array_key_exists($type, $this->irregularTypes)) {
-            return $this->irregularTypes[$type][0];
-        }
-
-        return $type;
+        return $this->model(Type::fromPropertyName($name));
     }
 
     /**
      * Clone an object.
      *
-     * @param string $type
+     * @param Type $type
      * @param object|array $object
      * @param object|array $newObject
      * @param string|int $newPrimaryKey
      * @param object|array $newParent
      * @return \stdClass
      */
-    public function cloneObject($type, $object, $newObject, $newPrimaryKey = null, $newParent = null)
+    public function cloneObject(Type $type, $object, $newObject, $newPrimaryKey = null, $newParent = null)
     {
-        $type = $this->studlyCase($type);
         $method = 'clone' . $type;
 
         return $this->soapClient(Client::CLONE_SERVICE)->$method([
-            $type => $object,
+            $type->name() => $object,
             $type . 'AttributesToOverride' => $newObject,
             'newPrimaryKey' => $newPrimaryKey,
             'newParent' => $newParent
@@ -171,48 +108,48 @@ class Client
     /**
      * Create an object.
      *
-     * @param string $type
+     * @param Type $type
      * @param object|array $object
      * @return \stdClass
      */
-    public function createObject($type, $object)
+    public function createObject(Type $type, $object)
     {
-        $method = 'create' . $this->studlyCase($type);
+        $method = 'create' . $type;
 
         return $this->soapClient(Client::CREATE_SERVICE)
-            ->$method([$this->camelCase($type) => $object])
+            ->$method([$type->camelCaseName() => $object])
             ->out;
     }
 
     /**
      * Delete an object by its primary key.
      *
-     * @param string $type
+     * @param Type $type
      * @param int|string $key
      */
-    public function deleteObject($type, $key)
+    public function deleteObject(Type $type, $key)
     {
         return $this->soapClient(Client::DELETE_SERVICE)
-            ->deleteObject(['in0' => $this->studlyCase($type), 'in1' => $key]);
+            ->deleteObject(['in0' => $type->name(), 'in1' => $key]);
     }
 
     /**
      * Find primary keys for the specified object using a filter (and optionally sort).
      *
-     * @param string $type
+     * @param Type $type
      * @param string $filter
      * @param array $sort
      * @return mixed
      */
-    public function findObjects($type, $filter, array $sort = null)
+    public function findObjects(Type $type, $filter, array $sort = null)
     {
         if (!empty($sort)) {
             $response = $this->soapClient(Client::FIND_SERVICE)
-                ->findAndSort(['in0' => $this->studlyCase($type), 'in1' => $filter, 'in2' => $sort])
+                ->findAndSort(['in0' => $type->name(), 'in1' => $filter, 'in2' => $sort])
                 ->out;
         } else {
             $response = $this->soapClient(Client::FIND_SERVICE)
-                ->find(['in0' => $this->studlyCase($type), 'in1' => $filter])
+                ->find(['in0' => $type->name(), 'in1' => $filter])
                 ->out;
         }
 
@@ -222,7 +159,7 @@ class Client
     /**
      * Get a model instance.
      *
-     * @param string $type
+     * @param Type|string $type
      * @return Model
      */
     public function model($type)
@@ -233,18 +170,18 @@ class Client
     /**
      * Read the specified object type by its primary key.
      *
-     * @param string $type
+     * @param Type $type
      * @param mixed $key
      * @return \stdClass|null
      * @throws SoapFault if an unexpected SOAP error occurs.
      */
-    public function readObject($type, $key)
+    public function readObject(Type $type, $key)
     {
-        $method = 'read' . $this->studlyCase($type);
+        $method = 'read' . $type;
 
         try {
             return $this->soapClient(Client::READ_SERVICE)
-                ->$method([$this->camelCase($type) => [self::PRIMARY_KEY => $key]])
+                ->$method([$type->camelCaseName() => [self::PRIMARY_KEY => $key]])
                 ->out;
         } catch (SoapFault $e) {
             if (strpos($e->getMessage(), 'Unable to locate object') !== 0) {
@@ -269,33 +206,18 @@ class Client
     }
 
     /**
-     * Get the studly-cased object type.
-     *
-     * @param string $type
-     * @return string
-     */
-    public function studlyCase($type)
-    {
-        if (array_key_exists($type, $this->irregularTypes)) {
-            return $this->irregularTypes[$type][1];
-        }
-
-        return ucfirst($type);
-    }
-
-    /**
      * Update an object.
      *
-     * @param string $type
+     * @param Type $type
      * @param \stdClass|array $object
      * @return mixed
      */
-    public function updateObject($type, $object)
+    public function updateObject(Type $type, $object)
     {
-        $method = 'update' . $this->studlyCase($type);
+        $method = 'update' . $type;
 
         return $this->soapClient(Client::UPDATE_SERVICE)
-            ->$method([$this->camelCase($type) => $object])
+            ->$method([$type->camelCaseName() => $object])
             ->out;
     }
 

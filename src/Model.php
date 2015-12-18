@@ -11,9 +11,9 @@ use Doctrine\Common\Inflector\Inflector;
 class Model implements ArrayAccess, JsonSerializable
 {
     /**
-     * Camel-cased object type.
+     * The object type.
      *
-     * @var string
+     * @var Type
      */
     protected $type;
 
@@ -49,15 +49,14 @@ class Model implements ArrayAccess, JsonSerializable
      * Create a new model instance.
      *
      * @param Client $client
-     * @param string $type
+     * @param Type|string $type
      * @param object $object
      */
     public function __construct(Client $client, $type, $object = null)
     {
         $this->client = $client;
-        $this->type = $type;
-
-        $this->object = is_null($object) ? new \stdClass() : $object;
+        $this->type = $type instanceof Type ? $type : new Type($type);
+        $this->object = is_object($object) ? $object : new \stdClass();
 
         $this->syncOriginal();
     }
@@ -134,21 +133,22 @@ class Model implements ArrayAccess, JsonSerializable
     /**
      * Fetch a "belongs to" relationship.
      *
-     * @param string $relatedModel
+     * @param string $relatedType
      * @param string $property
      * @return Model|null
      */
-    public function belongsTo($relatedModel, $property = null)
+    public function belongsTo($relatedType, $property = null)
     {
         // If no property has been specified, assume the it
         // has the same name as the related model type.
         if ($property == null) {
-            $property = $relatedModel;
+            $property = $relatedType;
+            $relatedType = Type::fromPropertyName($relatedType);
         }
 
         $foreignKey = $this->getProperty($property);
 
-        return $this->client->$relatedModel->read($foreignKey);
+        return $this->client->model($relatedType)->read($foreignKey);
     }
 
     /**
@@ -214,7 +214,7 @@ class Model implements ArrayAccess, JsonSerializable
     /**
      * Get the type of the model.
      *
-     * @return string
+     * @return Type
      */
     public function getType()
     {
@@ -224,21 +224,21 @@ class Model implements ArrayAccess, JsonSerializable
     /**
      * Fetch a "has many" relationship.
      *
-     * @param string $relatedModel
+     * @param string $relatedType
      * @param string $property
      * @param string $primaryKey
      * @return Builder
      */
-    public function hasMany($relatedModel, $property = null, $primaryKey = 'id')
+    public function hasMany($relatedType, $property = null, $primaryKey = 'id')
     {
-        // If no property has been specified, assume the related model is
+        // If no property has been specified, assume the related type is
         // plural and the property has the same name as the model type.
         if ($property == null) {
-            $relatedModel = Inflector::singularize($relatedModel);
-            $property = $this->getType();
+            $relatedType = Type::fromPropertyName(Inflector::singularize($relatedType));
+            $property = $this->getType()->propertyName();
         }
 
-        return $this->client->$relatedModel->filter('@' . $property, $this->key($primaryKey));
+        return $this->client->model($relatedType)->filter('@' . $property, $this->key($primaryKey));
     }
 
     /**
@@ -378,21 +378,6 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
-     * Auto-magically fetch related model(s).
-     *
-     * @param string $type
-     * @return KeyCollection|Model|null
-     */
-    public function related($type)
-    {
-        if ($this->hasProperty($type)) {
-            return $this->belongsTo($type);
-        }
-
-        return $this->hasMany($type);
-    }
-
-    /**
      * Persist the model in the web service.
      *
      * @return Model
@@ -463,6 +448,21 @@ class Model implements ArrayAccess, JsonSerializable
     protected function newKeyCollection(array $keys)
     {
         return new KeyCollection($this, $keys);
+    }
+
+    /**
+     * Auto-magically fetch related model(s).
+     *
+     * @param string $name
+     * @return Builder|Model|null
+     */
+    protected function related($name)
+    {
+        if ($this->hasProperty($name)) {
+            return $this->belongsTo($name);
+        }
+
+        return $this->hasMany($name);
     }
 
     /**

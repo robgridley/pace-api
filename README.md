@@ -43,7 +43,7 @@ $pace = new Pace(new SoapFactory(), 'epace-staging.domain.com', 'apiuser', 'apip
 To create a new object in Pace, get a model from the Pace client, set its properties, then call the save() method. You can retrieve a model instance by calling the model() method or using a dynamic property.
 
 ```php
-$csr = $pace->model('csr');
+$csr = $pace->model('CSR');
 // or the shorter, prettier:
 $csr = $pace->csr;
 
@@ -211,7 +211,7 @@ If you find an object which flies in the face of convention, you can call the pu
 
 ```php
 $job = $pace->job->read('5551239');
-$firstJobPart = $job->hasMany('jobPart', 'job', 'job')->first();
+$firstJobPart = $job->hasMany('JobPart', 'job', 'job')->first();
 ```
 
 ### Associating related models
