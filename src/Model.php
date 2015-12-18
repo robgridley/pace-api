@@ -2,10 +2,10 @@
 
 namespace Pace;
 
-use Exception;
 use ArrayAccess;
 use JsonSerializable;
 use Pace\XPath\Builder;
+use UnexpectedValueException;
 use Doctrine\Common\Inflector\Inflector;
 
 class Model implements ArrayAccess, JsonSerializable
@@ -71,7 +71,7 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function __call($method, array $arguments)
     {
-        if (count($arguments) == 0) {
+        if (empty($arguments)) {
             return $this->related($method);
         }
 
@@ -156,7 +156,6 @@ class Model implements ArrayAccess, JsonSerializable
      *
      * @param string $primaryKey
      * @return bool|null
-     * @throws Exception if the primary key cannot be read
      */
     public function delete($primaryKey = 'id')
     {
@@ -228,8 +227,7 @@ class Model implements ArrayAccess, JsonSerializable
      * @param string $relatedModel
      * @param string $property
      * @param string $primaryKey
-     * @return KeyCollection
-     * @throws Exception if the primary key cannot be read
+     * @return Builder
      */
     public function hasMany($relatedModel, $property = null, $primaryKey = 'id')
     {
@@ -240,7 +238,7 @@ class Model implements ArrayAccess, JsonSerializable
             $property = $this->getType();
         }
 
-        return $this->client->$relatedModel->filter('@' . $property, $this->key($primaryKey))->find();
+        return $this->client->$relatedModel->filter('@' . $property, $this->key($primaryKey));
     }
 
     /**
@@ -267,15 +265,15 @@ class Model implements ArrayAccess, JsonSerializable
      * Get the model's primary key.
      *
      * @param string $primaryKey
-     * @return mixed
-     * @throws Exception if the primary key cannot be read
+     * @return string|int
+     * @throws UnexpectedValueException if the key is null.
      */
     public function key($primaryKey = 'id')
     {
         $key = $this->getProperty($primaryKey);
 
         if ($key == null) {
-            throw new Exception('Could not read the primary key.');
+            throw new UnexpectedValueException('Key must not be null.');
         }
 
         return $key;
@@ -366,7 +364,7 @@ class Model implements ArrayAccess, JsonSerializable
      *
      * @param int|string $key
      * @return Model
-     * @throws ModelNotFoundException
+     * @throws ModelNotFoundException if the key does not exist.
      */
     public function readOrFail($key)
     {

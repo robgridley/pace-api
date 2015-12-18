@@ -191,6 +191,8 @@ You can load related models automatically via dynamic methods.
 
 For a "belongs to" relationship, the model property name and foreign model type must match. For example, the customer object has a property named 'csr', which contains the primary key for the 'csr' object type.
 
+The following returns a single Model.
+
 ```php
 $customer = $pace->customer->read('HOUSE');
 $houseCsr = $customer->csr();
@@ -198,12 +200,19 @@ $houseCsr = $customer->csr();
 
 To load "has many" related models, call the plural of the foreign model's type. It is assumed that the model has a primary key of 'id', and the foreign model stores this key in a propery named after the parent model's type. For example, the 'job' object stores the 'customer' object's primary key in a property named 'customer'.
 
+The following returns an XPath\Builder object so you may optionally add additional filters on the related models.
+
 ```php
 $customer = $pace->customer->read('HOUSE');
-$houseJobs = $customer->jobs();
+$houseJobs = $customer->jobs()->filter('@adminStatus', 'O')->get();
 ```
 
-If you find an object which flies in the face of convention, you can call the public belongsTo() and hasMany() methods directly.
+If you find an object which flies in the face of convention, you can call the public belongsTo() and hasMany() methods directly. The Job and JobPart objects are good examples.
+
+```php
+$job = $pace->job->read('5551239');
+$firstJobPart = $job->hasMany('jobPart', 'job', 'job')->first();
+```
 
 ### Associating related models
 

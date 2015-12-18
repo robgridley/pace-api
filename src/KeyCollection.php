@@ -30,7 +30,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      *
      * @var array
      */
-    protected $read = [];
+    protected $readModels = [];
 
     /**
      * Create a new key collection instance.
@@ -266,7 +266,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
     }
 
     /**
-     * Read the specified key from the model.
+     * Get the model for the specified key.
      *
      * @param mixed $key
      * @return Model|null
@@ -277,10 +277,10 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
             return null;
         }
 
-        if (!array_key_exists($key, $this->read)) {
-            $this->read[$key] = $this->model->read($key);
+        if (!array_key_exists($key, $this->readModels)) {
+            $this->readModels[$key] = $this->model->read($key);
         }
 
-        return $this->read[$key];
+        return $this->readModels[$key];
     }
 }
