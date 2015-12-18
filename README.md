@@ -211,11 +211,7 @@ If you find an object which flies in the face of convention, you can call the pu
 
 ```php
 $job = $pace->job->read('5551239');
-<<<<<<< HEAD
 $firstJobPart = $job->hasMany('jobPart', 'job', 'job')->first();
-=======
-$jobParts = $job->hasMany('jobPart', 'job', 'job')->first();
->>>>>>> 4aaef95e1a6080577600c4fe71ee9c89e76a10cc
 ```
 
 ### Associating related models
