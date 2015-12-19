@@ -31,12 +31,6 @@ class TypeSpec extends ObjectBehavior
         $this->shouldThrow('\InvalidArgumentException')->duringInstantiation();
     }
 
-    function it_converts_studly_caps_to_camel_case()
-    {
-        $this->beConstructedWith('JobPart');
-        $this->camelCaseName()->shouldReturn('jobPart');
-    }
-
     function it_can_be_constructed_from_property_names()
     {
         $this->beConstructedThrough('fromPropertyName', ['jobPart']);
@@ -47,12 +41,6 @@ class TypeSpec extends ObjectBehavior
     {
         $this->beConstructedThrough('fromPropertyName', ['crmUser']);
         $this->name()->shouldReturn('CRMUser');
-    }
-
-    function it_converts_irregular_property_names_to_camel_case()
-    {
-        $this->beConstructedThrough('fromPropertyName', ['crmUser']);
-        $this->camelCaseName()->shouldReturn('cRMUser');
     }
 
     function it_converts_type_names_to_irregular_property_names()

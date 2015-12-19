@@ -14,6 +14,13 @@ class Type
     protected $name;
 
     /**
+     * The property name.
+     *
+     * @var string
+     */
+    protected $propertyName;
+
+    /**
      * Object type names with adjacent uppercase letters.
      *
      * @var array
@@ -72,6 +79,7 @@ class Type
         }
 
         $this->name = $name;
+        $this->propertyName = array_search($name, static::$irregularNames) ?: lcfirst($name);
     }
 
     /**
@@ -90,26 +98,6 @@ class Type
     }
 
     /**
-     * Get the property name.
-     *
-     * @return string
-     */
-    public function propertyName()
-    {
-        return array_search($this->name, static::$irregularNames) ?: $this->camelCaseName();
-    }
-
-    /**
-     * Get the camel-cased type name.
-     *
-     * @return string
-     */
-    public function camelCaseName()
-    {
-        return lcfirst($this->name);
-    }
-
-    /**
      * Get the type name.
      *
      * @return string
@@ -117,6 +105,16 @@ class Type
     public function name()
     {
         return $this->name;
+    }
+
+    /**
+     * Get the property name.
+     *
+     * @return string
+     */
+    public function propertyName()
+    {
+        return $this->propertyName;
     }
 
     /**

@@ -86,19 +86,19 @@ class Client
     /**
      * Clone an object.
      *
-     * @param Type $type
+     * @param string $type
      * @param object|array $object
      * @param object|array $newObject
      * @param string|int $newPrimaryKey
      * @param object|array $newParent
      * @return \stdClass
      */
-    public function cloneObject(Type $type, $object, $newObject, $newPrimaryKey = null, $newParent = null)
+    public function cloneObject($type, $object, $newObject, $newPrimaryKey = null, $newParent = null)
     {
         $method = 'clone' . $type;
 
         return $this->soapClient(Client::CLONE_SERVICE)->$method([
-            $type->name() => $object,
+            $type => $object,
             $type . 'AttributesToOverride' => $newObject,
             'newPrimaryKey' => $newPrimaryKey,
             'newParent' => $newParent
@@ -108,48 +108,48 @@ class Client
     /**
      * Create an object.
      *
-     * @param Type $type
+     * @param string $type
      * @param object|array $object
      * @return \stdClass
      */
-    public function createObject(Type $type, $object)
+    public function createObject($type, $object)
     {
         $method = 'create' . $type;
 
         return $this->soapClient(Client::CREATE_SERVICE)
-            ->$method([$type->camelCaseName() => $object])
+            ->$method([lcfirst($type) => $object])
             ->out;
     }
 
     /**
      * Delete an object by its primary key.
      *
-     * @param Type $type
+     * @param string $type
      * @param int|string $key
      */
-    public function deleteObject(Type $type, $key)
+    public function deleteObject($type, $key)
     {
         return $this->soapClient(Client::DELETE_SERVICE)
-            ->deleteObject(['in0' => $type->name(), 'in1' => $key]);
+            ->deleteObject(['in0' => $type, 'in1' => $key]);
     }
 
     /**
      * Find primary keys for the specified object using a filter (and optionally sort).
      *
-     * @param Type $type
+     * @param string $type
      * @param string $filter
      * @param array $sort
      * @return mixed
      */
-    public function findObjects(Type $type, $filter, array $sort = null)
+    public function findObjects($type, $filter, array $sort = null)
     {
         if (!empty($sort)) {
             $response = $this->soapClient(Client::FIND_SERVICE)
-                ->findAndSort(['in0' => $type->name(), 'in1' => $filter, 'in2' => $sort])
+                ->findAndSort(['in0' => $type, 'in1' => $filter, 'in2' => $sort])
                 ->out;
         } else {
             $response = $this->soapClient(Client::FIND_SERVICE)
-                ->find(['in0' => $type->name(), 'in1' => $filter])
+                ->find(['in0' => $type, 'in1' => $filter])
                 ->out;
         }
 
@@ -170,18 +170,18 @@ class Client
     /**
      * Read the specified object type by its primary key.
      *
-     * @param Type $type
+     * @param string $type
      * @param mixed $key
      * @return \stdClass|null
      * @throws SoapFault if an unexpected SOAP error occurs.
      */
-    public function readObject(Type $type, $key)
+    public function readObject($type, $key)
     {
         $method = 'read' . $type;
 
         try {
             return $this->soapClient(Client::READ_SERVICE)
-                ->$method([$type->camelCaseName() => [self::PRIMARY_KEY => $key]])
+                ->$method([lcfirst($type) => [self::PRIMARY_KEY => $key]])
                 ->out;
         } catch (SoapFault $e) {
             if (strpos($e->getMessage(), 'Unable to locate object') !== 0) {
@@ -208,16 +208,16 @@ class Client
     /**
      * Update an object.
      *
-     * @param Type $type
+     * @param string $type
      * @param \stdClass|array $object
      * @return mixed
      */
-    public function updateObject(Type $type, $object)
+    public function updateObject($type, $object)
     {
         $method = 'update' . $type;
 
         return $this->soapClient(Client::UPDATE_SERVICE)
-            ->$method([$type->camelCaseName() => $object])
+            ->$method([lcfirst($type) => $object])
             ->out;
     }
 
