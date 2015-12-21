@@ -80,7 +80,7 @@ class Client
      */
     public function __get($name)
     {
-        return $this->model(Type::fromPropertyName($name));
+        return $this->model(Type::decamelize($name));
     }
 
     /**

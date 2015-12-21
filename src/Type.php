@@ -14,11 +14,11 @@ class Type
     protected $name;
 
     /**
-     * The property name.
+     * The camel-cased type name.
      *
      * @var string
      */
-    protected $propertyName;
+    protected $camelized;
 
     /**
      * Object type names with adjacent uppercase letters.
@@ -79,16 +79,26 @@ class Type
         }
 
         $this->name = $name;
-        $this->propertyName = array_search($name, static::$irregularNames) ?: lcfirst($name);
+        $this->camelized = array_search($name, static::$irregularNames) ?: lcfirst($name);
     }
 
     /**
-     * Create a new instance from a property name.
+     * Get the camel-cased name.
+     *
+     * @return string
+     */
+    public function camelize()
+    {
+        return $this->camelized;
+    }
+
+    /**
+     * Create a new instance from a camel-cased name.
      *
      * @param string $name
      * @return Type
      */
-    public static function fromPropertyName($name)
+    public static function decamelize($name)
     {
         if (array_key_exists($name, static::$irregularNames)) {
             return new static(static::$irregularNames[$name]);
@@ -98,32 +108,12 @@ class Type
     }
 
     /**
-     * Get the type name.
-     *
-     * @return string
-     */
-    public function name()
-    {
-        return $this->name;
-    }
-
-    /**
-     * Get the property name.
-     *
-     * @return string
-     */
-    public function propertyName()
-    {
-        return $this->propertyName;
-    }
-
-    /**
      * Convert the instance to a string.
      *
      * @return string
      */
     public function __toString()
     {
-        return $this->name();
+        return $this->name;
     }
 }

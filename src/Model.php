@@ -137,15 +137,8 @@ class Model implements ArrayAccess, JsonSerializable
      * @param string $property
      * @return Model|null
      */
-    public function belongsTo($relatedType, $property = null)
+    public function belongsTo($relatedType, $property)
     {
-        // If no property has been specified, assume the it
-        // has the same name as the related model type.
-        if ($property == null) {
-            $property = $relatedType;
-            $relatedType = Type::fromPropertyName($relatedType);
-        }
-
         $foreignKey = $this->getProperty($property);
 
         return $this->client->model($relatedType)->read($foreignKey);
@@ -229,15 +222,8 @@ class Model implements ArrayAccess, JsonSerializable
      * @param string $primaryKey
      * @return Builder
      */
-    public function hasMany($relatedType, $property = null, $primaryKey = null)
+    public function hasMany($relatedType, $property, $primaryKey = null)
     {
-        // If no property has been specified, assume the related type is
-        // plural and the property has the same name as the model type.
-        if ($property == null) {
-            $relatedType = Type::fromPropertyName(Inflector::singularize($relatedType));
-            $property = $this->getType()->propertyName();
-        }
-
         return $this->client->model($relatedType)->filter('@' . $property, $this->key($primaryKey));
     }
 
@@ -433,7 +419,7 @@ class Model implements ArrayAccess, JsonSerializable
             return 'id';
         }
 
-        return $this->getType()->propertyName();
+        return $this->getType()->camelize();
     }
 
     /**
@@ -471,16 +457,21 @@ class Model implements ArrayAccess, JsonSerializable
     /**
      * Auto-magically fetch related model(s).
      *
-     * @param string $name
+     * @param string $property
      * @return Builder|Model|null
      */
-    protected function related($name)
+    protected function related($property)
     {
-        if ($this->hasProperty($name)) {
-            return $this->belongsTo($name);
+        if ($this->hasProperty($property)) {
+            $type = Type::decamelize($property);
+
+            return $this->belongsTo($type, $property);
         }
 
-        return $this->hasMany($name);
+        $type = Type::decamelize(Inflector::singularize($property));
+        $property = $this->getType()->camelize();
+
+        return $this->hasMany($type, $property);
     }
 
     /**
