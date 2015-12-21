@@ -70,11 +70,11 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function __call($method, array $arguments)
     {
-        if (empty($arguments)) {
-            return $this->related($method);
+        if ($this->isBuilderMethod($method)) {
+            return call_user_func_array([$this->newBuilder(), $method], $arguments);
         }
 
-        return call_user_func_array([$this->newBuilder(), $method], $arguments);
+        return $this->getRelatedFromMethod($method);
     }
 
     /**
@@ -134,14 +134,18 @@ class Model implements ArrayAccess, JsonSerializable
      * Fetch a "belongs to" relationship.
      *
      * @param string $relatedType
-     * @param string $property
+     * @param string $foreignKey
      * @return Model|null
      */
-    public function belongsTo($relatedType, $property)
+    public function belongsTo($relatedType, $foreignKey)
     {
-        $foreignKey = $this->getProperty($property);
+        if ($this->isCompoundKey($foreignKey)) {
+            $key = $this->getCompoundKey($foreignKey);
+        } else {
+            $key = $this->getProperty($foreignKey);
+        }
 
-        return $this->client->model($relatedType)->read($foreignKey);
+        return $this->client->model($relatedType)->read($key);
     }
 
     /**
@@ -218,13 +222,23 @@ class Model implements ArrayAccess, JsonSerializable
      * Fetch a "has many" relationship.
      *
      * @param string $relatedType
-     * @param string $property
+     * @param string $foreignKey
      * @param string $primaryKey
      * @return Builder
      */
-    public function hasMany($relatedType, $property, $primaryKey = null)
+    public function hasMany($relatedType, $foreignKey, $primaryKey = null)
     {
-        return $this->client->model($relatedType)->filter('@' . $property, $this->key($primaryKey));
+        $builder = $this->client->model($relatedType)->newBuilder();
+
+        if ($this->isCompoundKey($foreignKey)) {
+            foreach ($this->getCompoundKeyArray($foreignKey, $primaryKey) as $attribute => $value) {
+                $builder->filter('@' . $attribute, $value);
+            }
+        } else {
+            $builder->filter('@' . $foreignKey, $this->key($primaryKey));
+        }
+
+        return $builder;
     }
 
     /**
@@ -386,6 +400,38 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
+     * Get a compound key for a "belongs to" relationship.
+     *
+     * @param string $foreignKey
+     * @return string
+     */
+    protected function getCompoundKey($foreignKey)
+    {
+        $keys = [];
+
+        foreach ($this->splitKey($foreignKey) as $key) {
+            $keys[] = $this->getProperty($key);
+        }
+
+        return $this->joinKeys($keys);
+    }
+
+    /**
+     * Get a compound key array for a "has many" relationship.
+     *
+     * @param string $foreignKey
+     * @param string $primaryKey
+     * @return array
+     */
+    protected function getCompoundKeyArray($foreignKey, $primaryKey)
+    {
+        return array_combine(
+            $this->splitKey($foreignKey),
+            $this->splitKey($this->key($primaryKey))
+        );
+    }
+
+    /**
      * Get the specified property or null if it does not exist.
      *
      * @param string $property
@@ -402,6 +448,28 @@ class Model implements ArrayAccess, JsonSerializable
         if (property_exists($this->object, "U_$property")) {
             return $this->object->{"U_$property"};
         }
+    }
+
+    /**
+     * Auto-magically fetch relationships.
+     *
+     * @param string $method
+     * @return Builder|Model|null
+     */
+    protected function getRelatedFromMethod($method)
+    {
+        // If the called method name exists as a property on the model,
+        // assume it is the camel-cased related type and the property
+        // contains the foreign key for a "belongs to" relationship.
+        if ($this->hasProperty($method)) {
+            $relatedType = Type::decamelize($method);
+            return $this->belongsTo($relatedType, $method);
+        }
+
+        // Otherwise, the called method name should be a pluralized,
+        // camel-cased related type for a "has many" relationship.
+        $type = Type::decamelize(Inflector::singularize($method));
+        return $this->hasMany($type, $this->getType()->camelize());
     }
 
     /**
@@ -434,6 +502,39 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
+     * Determine if a dynamic call should be passed to the XPath builder class.
+     *
+     * @param string $name
+     * @return bool
+     */
+    protected function isBuilderMethod($name)
+    {
+        return method_exists(Builder::class, $name) && is_callable([Builder::class, $name]);
+    }
+
+    /**
+     * Check if the specified key is a compound key.
+     *
+     * @param mixed $key
+     * @return bool
+     */
+    protected function isCompoundKey($key)
+    {
+        return strpos($key, ':') !== false;
+    }
+
+    /**
+     * Join an array of keys into a compound key.
+     *
+     * @param array $keys
+     * @return string
+     */
+    protected function joinKeys(array $keys)
+    {
+        return implode(':', $keys);
+    }
+
+    /**
      * Create a new XPath builder.
      *
      * @return Builder
@@ -452,26 +553,6 @@ class Model implements ArrayAccess, JsonSerializable
     protected function newKeyCollection(array $keys)
     {
         return new KeyCollection($this, $keys);
-    }
-
-    /**
-     * Auto-magically fetch related model(s).
-     *
-     * @param string $property
-     * @return Builder|Model|null
-     */
-    protected function related($property)
-    {
-        if ($this->hasProperty($property)) {
-            $type = Type::decamelize($property);
-
-            return $this->belongsTo($type, $property);
-        }
-
-        $type = Type::decamelize(Inflector::singularize($property));
-        $property = $this->getType()->camelize();
-
-        return $this->hasMany($type, $property);
     }
 
     /**
@@ -496,6 +577,17 @@ class Model implements ArrayAccess, JsonSerializable
         }
 
         $this->object->$property = $value;
+    }
+
+    /**
+     * Split a compound key into an array.
+     *
+     * @param string $key
+     * @return array
+     */
+    protected function splitKey($key)
+    {
+        return explode(':', $key);
     }
 
     /**
