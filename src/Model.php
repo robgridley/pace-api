@@ -157,7 +157,7 @@ class Model implements ArrayAccess, JsonSerializable
      * @param string $primaryKey
      * @return bool|null
      */
-    public function delete($primaryKey = 'id')
+    public function delete($primaryKey = null)
     {
         if ($this->exists) {
             $this->client->deleteObject($this->getType(), $this->key($primaryKey));
@@ -229,7 +229,7 @@ class Model implements ArrayAccess, JsonSerializable
      * @param string $primaryKey
      * @return Builder
      */
-    public function hasMany($relatedType, $property = null, $primaryKey = 'id')
+    public function hasMany($relatedType, $property = null, $primaryKey = null)
     {
         // If no property has been specified, assume the related type is
         // plural and the property has the same name as the model type.
@@ -268,9 +268,9 @@ class Model implements ArrayAccess, JsonSerializable
      * @return string|int
      * @throws UnexpectedValueException if the key is null.
      */
-    public function key($primaryKey = 'id')
+    public function key($primaryKey = null)
     {
-        $key = $this->getProperty($primaryKey);
+        $key = $this->getProperty($primaryKey ?: $this->guessPrimaryKey());
 
         if ($key == null) {
             throw new UnexpectedValueException('Key must not be null.');
@@ -416,6 +416,24 @@ class Model implements ArrayAccess, JsonSerializable
         if (property_exists($this->object, "U_$property")) {
             return $this->object->{"U_$property"};
         }
+    }
+
+    /**
+     * Attempt to guess the primary key field.
+     *
+     * @return string
+     */
+    protected function guessPrimaryKey()
+    {
+        if ($this->hasProperty(Client::PRIMARY_KEY)) {
+            return Client::PRIMARY_KEY;
+        }
+
+        if ($this->hasProperty('id')) {
+            return 'id';
+        }
+
+        return $this->getType()->propertyName();
     }
 
     /**

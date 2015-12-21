@@ -14,9 +14,10 @@ class SoapClient extends \SoapClient
     /**
      * Get a multidimensional array of types.
      *
+     * @param string $name
      * @return array
      */
-    public function getTypes()
+    public function getTypes($name = null)
     {
         if (empty($this->types)) {
             $structures = $this->__getTypes();
@@ -32,7 +33,7 @@ class SoapClient extends \SoapClient
             }
         }
 
-        return $this->types;
+        return $name == null ? $this->types : $this->types[$name];
     }
 
     /**
