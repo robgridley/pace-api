@@ -119,6 +119,16 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
     }
 
     /**
+     * Determine if the key collection is empty.
+     *
+     * @return bool
+     */
+    public function isEmpty()
+    {
+        return empty($this->keys);
+    }
+
+    /**
      * Convert this instance to a serializable array.
      *
      * @return array
