@@ -252,6 +252,17 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
+     * Join an array of keys into a compound key.
+     *
+     * @param array $keys
+     * @return string
+     */
+    public function joinKeys(array $keys)
+    {
+        return implode(':', $keys);
+    }
+
+    /**
      * Convert the model to a serializable array.
      *
      * @return array
@@ -400,6 +411,17 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
+     * Split a compound key into an array.
+     *
+     * @param string $key
+     * @return array
+     */
+    public function splitKey($key)
+    {
+        return explode(':', $key);
+    }
+
+    /**
      * Get a compound key for a "belongs to" relationship.
      *
      * @param string $foreignKey
@@ -524,17 +546,6 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
-     * Join an array of keys into a compound key.
-     *
-     * @param array $keys
-     * @return string
-     */
-    protected function joinKeys(array $keys)
-    {
-        return implode(':', $keys);
-    }
-
-    /**
      * Create a new XPath builder.
      *
      * @return Builder
@@ -577,17 +588,6 @@ class Model implements ArrayAccess, JsonSerializable
         }
 
         $this->object->$property = $value;
-    }
-
-    /**
-     * Split a compound key into an array.
-     *
-     * @param string $key
-     * @return array
-     */
-    protected function splitKey($key)
-    {
-        return explode(':', $key);
     }
 
     /**
