@@ -249,7 +249,7 @@ $line->inventoryBatch = $batch;
 
 ## JSON
 
-Both the Model and KeyCollection classes implemement JsonSerializable and casting either class to a string will generate JSON.
+Both the `Model` and `KeyCollection` classes implemement the `JsonSerializable` interface and casting either class to a string will generate JSON.
 
 ```php
 // print a JSON representation of the House account
