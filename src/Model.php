@@ -199,6 +199,23 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
+     * Refresh the properties of the model from the web service.
+     *
+     * @param string $primaryKey
+     * @return Model|null
+     */
+    public function fresh($primaryKey = null)
+    {
+        if (!$this->exists) {
+            return null;
+        }
+
+        $this->read($this->key($primaryKey));
+
+        return $this;
+    }
+
+    /**
      * Get the object properties which have changed since the last sync.
      *
      * @return object
@@ -416,8 +433,12 @@ class Model implements ArrayAccess, JsonSerializable
      * @param string $key
      * @return array
      */
-    public function splitKey($key)
+    public function splitKey($key = null)
     {
+        if (is_null($key)) {
+            $key = $this->key();
+        }
+
         return explode(':', $key);
     }
 
