@@ -39,6 +39,13 @@ class Model implements ArrayAccess, JsonSerializable
     protected $original;
 
     /**
+     * Auto-magically loaded "belongs to" relationships.
+     *
+     * @var array
+     */
+    protected $relations = [];
+
+    /**
      * Indicates if this model exists in Pace.
      *
      * @var bool
@@ -505,13 +512,17 @@ class Model implements ArrayAccess, JsonSerializable
         // assume it is the camel-cased related type and the property
         // contains the foreign key for a "belongs to" relationship.
         if ($this->hasProperty($method)) {
-            $relatedType = Type::decamelize($method);
-            return $this->belongsTo($relatedType, $method);
+            if (!$this->relationLoaded($method)) {
+                $relatedType = Type::fromCamelCase($method);
+                $this->relations[$method] = $this->belongsTo($relatedType, $method);
+            }
+
+            return $this->relations[$method];
         }
 
         // Otherwise, the called method name should be a pluralized,
         // camel-cased related type for a "has many" relationship.
-        $type = Type::decamelize(Inflector::singularize($method));
+        $type = Type::fromCamelCase(Inflector::singularize($method));
         return $this->hasMany($type, $this->getType()->camelize());
     }
 
@@ -585,6 +596,17 @@ class Model implements ArrayAccess, JsonSerializable
     protected function newKeyCollection(array $keys)
     {
         return new KeyCollection($this, $keys);
+    }
+
+    /**
+     * Determine if a "belongs to" relationship has already been loaded.
+     *
+     * @param string $relation
+     * @return bool
+     */
+    protected function relationLoaded($relation)
+    {
+        return array_key_exists($relation, $this->relations);
     }
 
     /**

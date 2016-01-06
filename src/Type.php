@@ -98,7 +98,7 @@ class Type
      * @param string $name
      * @return Type
      */
-    public static function decamelize($name)
+    public static function fromCamelCase($name)
     {
         if (array_key_exists($name, static::$irregularNames)) {
             return new static(static::$irregularNames[$name]);

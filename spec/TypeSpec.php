@@ -33,13 +33,13 @@ class TypeSpec extends ObjectBehavior
 
     function it_can_be_constructed_with_camel_cased_names()
     {
-        $this->beConstructedThrough('decamelize', ['jobPart']);
+        $this->beConstructedThrough('fromCamelCase', ['jobPart']);
         $this->__toString()->shouldReturn('JobPart');
     }
 
     function it_can_be_constructed_with_irregular_camel_cased_names()
     {
-        $this->beConstructedThrough('decamelize', ['crmUser']);
+        $this->beConstructedThrough('fromCamelCase', ['crmUser']);
         $this->__toString()->shouldReturn('CRMUser');
     }
 
