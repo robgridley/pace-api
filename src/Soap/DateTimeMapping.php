@@ -43,7 +43,8 @@ class DateTimeMapping implements TypeMapping
      */
     public function fromXml($xml)
     {
-        return Carbon::createFromFormat($this->xmlFormat, new SimpleXMLElement($xml), 'UTC');
+        return Carbon::createFromFormat($this->xmlFormat, new SimpleXMLElement($xml), 'UTC')
+            ->timezone(date_default_timezone_get());
     }
 
     /**
@@ -54,6 +55,10 @@ class DateTimeMapping implements TypeMapping
      */
     public function toXml($php)
     {
-        return sprintf('<%1$s>%2$s</%1$s>', $this->getTypeName(), $php->format($this->xmlFormat));
+        return sprintf(
+            '<%1$s>%2$s</%1$s>',
+            $this->getTypeName(),
+            $php->copy()->timezone('UTC')->format($this->xmlFormat)
+        );
     }
 }
