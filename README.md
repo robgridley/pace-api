@@ -2,22 +2,12 @@
 
 An unofficial PHP client library for EFI Pace's SOAP API, created by a Pace administator and PHP developer. This library makes make some assumptions about convention to make your life just a little bit easier.
 
-This version is still being actively developed, and thus should not be considered stable, although the author is using it for several production projects.
-
 ## Installation
 
-To install via [Composer](http://getcomposer.org/) add the following to your project's composer.json:
+Install via [Composer](http://getcomposer.org/):
 
-```javascript
-"repositories": [
-	{
-		"type": "vcs",
-		"url": "https://github.com/robgridley/pace-api"
-	}
-],
-"require": {
-	"robgridley/pace-api": "dev-master"
-}
+```
+$ composer require robgridley/pace-api
 ```
 
 ## To-dos
@@ -254,4 +244,27 @@ Both the `Model` and `KeyCollection` classes implemement the `JsonSerializable` 
 ```php
 // print a JSON representation of the House account
 echo $pace->customer->read('HOUSE');
+```
+
+## Version
+
+Identify the version of Pace running on the server.
+
+```php
+$pace->version();
+```
+
+The above will return:
+
+```
+array(4) {
+  ["string"]=>
+  string(24) "27.12-750 (201512111349)"
+  ["major"]=>
+  int(27)
+  ["minor"]=>
+  int(12)
+  ["patch"]=>
+  int(750)
+}
 ```

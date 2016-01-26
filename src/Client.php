@@ -157,6 +157,16 @@ class Client
     }
 
     /**
+     * Perform a getVersion call.
+     *
+     * @return string
+     */
+    public function getVersion()
+    {
+        return $this->soapClient(self::VERSION_SERVICE)->getVersion()->out;
+    }
+
+    /**
      * Get a model instance.
      *
      * @param Type|string $type
@@ -224,11 +234,15 @@ class Client
     /**
      * Check the version of Pace running on the server.
      *
-     * @return string
+     * @return array
      */
     public function version()
     {
-        return $this->soapClient(self::VERSION_SERVICE)->getVersion()->out;
+        $version['string'] = $this->getVersion();
+
+        preg_match('/(\d+)\.(\d+)\-(\d+)/', $version['string'], $matches);
+
+        return $version + array_combine(['major', 'minor', 'patch'], array_map('intval', array_slice($matches, 1)));
     }
 
     /**
