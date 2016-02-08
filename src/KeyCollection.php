@@ -57,7 +57,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
     /**
      * Read all of the keys.
      *
-     * @return array
+     * @return Model[]
      */
     public function all()
     {
@@ -135,7 +135,13 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      */
     function jsonSerialize()
     {
-        return $this->all();
+        $serializable = $this->all();
+
+        foreach ($serializable as $key => $model) {
+            $serializable[$key] = $model->jsonSerialize();
+        }
+
+        return $serializable;
     }
 
     /**
