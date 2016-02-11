@@ -2,24 +2,10 @@
 
 namespace Pace;
 
-use InvalidArgumentException;
+use Doctrine\Common\Inflector\Inflector;
 
 class Type
 {
-    /**
-     * The type name.
-     *
-     * @var string
-     */
-    protected $name;
-
-    /**
-     * The camel-cased type name.
-     *
-     * @var string
-     */
-    protected $camelized;
-
     /**
      * Object type names with adjacent uppercase letters.
      *
@@ -68,52 +54,35 @@ class Type
     ];
 
     /**
-     * Create a new instance.
+     * Convert a name to camel case.
      *
      * @param string $name
-     */
-    public function __construct($name)
-    {
-        if (!preg_match('/^([A-Z]+[a-z]*)+$/', $name)) {
-            throw new InvalidArgumentException('Type name must be in StudlyCaps.');
-        }
-
-        $this->name = $name;
-        $this->camelized = array_search($name, static::$irregularNames) ?: lcfirst($name);
-    }
-
-    /**
-     * Get the camel-cased name.
-     *
      * @return string
      */
-    public function camelize()
+    public static function camelize($name)
     {
-        return $this->camelized;
+        return array_search($name, static::$irregularNames) ?: lcfirst($name);
     }
 
     /**
-     * Create a new instance from a camel-cased name.
+     * Convert a name to model case.
      *
      * @param string $name
-     * @return Type
+     * @return string
      */
-    public static function fromCamelCase($name)
+    public static function modelify($name)
     {
-        if (array_key_exists($name, static::$irregularNames)) {
-            return new static(static::$irregularNames[$name]);
-        }
-
-        return new static(ucfirst($name));
+        return array_search($name, array_flip(static::$irregularNames)) ?: ucfirst($name);
     }
 
     /**
-     * Convert the instance to a string.
+     * Get the singular form of a name.
      *
+     * @param string $name
      * @return string
      */
-    public function __toString()
+    public static function singularize($name)
     {
-        return $this->name;
+        return Inflector::singularize($name);
     }
 }

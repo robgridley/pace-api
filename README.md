@@ -10,9 +10,19 @@ Install via [Composer](http://getcomposer.org/):
 $ composer require robgridley/pace-api
 ```
 
+## Testing
+
+PHPUnit tests with 100% code coverage for `Model`, `KeyCollection` and `XPath\Builder` classes.
+
+To run the tests:
+
+```
+$ composer test
+```
+
 ## To-dos
 
-* Write more tests
+* Write tests for remaining classes
 * Implement remaining Pace services (e.g. "InvokeProcess")
 
 ## Configuration

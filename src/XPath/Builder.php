@@ -3,8 +3,8 @@
 namespace Pace\XPath;
 
 use Closure;
+use DateTime;
 use Pace\Model;
-use Carbon\Carbon;
 use InvalidArgumentException;
 use Pace\ModelNotFoundException;
 
@@ -115,7 +115,7 @@ class Builder
      */
     public function find()
     {
-        return $this->model->find($this->getXPathFilter(), $this->getXPathSort());
+        return $this->model->find($this->toXPath(), $this->toXPathSort());
     }
 
     /**
@@ -239,7 +239,7 @@ class Builder
      *
      * @return string
      */
-    public function getXPathFilter()
+    public function toXPath()
     {
         $xpath = [];
 
@@ -264,7 +264,7 @@ class Builder
      *
      * @return array|null
      */
-    public function getXPathSort()
+    public function toXPathSort()
     {
         return count($this->sorts) ? ['XPathDataSort' => $this->sorts] : null;
     }
@@ -301,7 +301,7 @@ class Builder
      */
     protected function compileNested(array $filter)
     {
-        return sprintf('%s (%s)', $filter['boolean'], $filter['builder']->getXPathFilter());
+        return sprintf('%s (%s)', $filter['boolean'], $filter['builder']->toXPath());
     }
 
     /**
@@ -346,8 +346,8 @@ class Builder
     protected function value($value)
     {
         switch (true) {
-            case ($value instanceof Carbon):
-                return $this->wrapDate($value);
+            case ($value instanceof DateTime):
+                return $this->date($value);
 
             case (is_int($value)):
             case (is_float($value)):
@@ -362,13 +362,13 @@ class Builder
     }
 
     /**
-     * Convert Carbon dates to XPath dates.
+     * Convert DateTime instance to XPath date function.
      *
-     * @param Carbon $value
+     * @param DateTime $dt
      * @return string
      */
-    protected function wrapDate(Carbon $value)
+    protected function date(DateTime $dt)
     {
-        return sprintf('date(%d, %d, %d)', $value->year, $value->month, $value->day);
+        return $dt->format('\d\a\t\e(Y, n, j)');
     }
 }

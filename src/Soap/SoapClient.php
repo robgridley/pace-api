@@ -2,7 +2,9 @@
 
 namespace Pace\Soap;
 
-class SoapClient extends \SoapClient
+use SoapClient as BaseSoapClient;
+
+class SoapClient extends BaseSoapClient
 {
     /**
      * Cached types.

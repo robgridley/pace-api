@@ -5,15 +5,15 @@ namespace Pace;
 use ArrayAccess;
 use JsonSerializable;
 use Pace\XPath\Builder;
+use InvalidArgumentException;
 use UnexpectedValueException;
-use Doctrine\Common\Inflector\Inflector;
 
 class Model implements ArrayAccess, JsonSerializable
 {
     /**
-     * The object type.
+     * The model type.
      *
-     * @var Type
+     * @var string
      */
     protected $type;
 
@@ -29,7 +29,7 @@ class Model implements ArrayAccess, JsonSerializable
      *
      * @var object
      */
-    protected $object;
+    protected $properties;
 
     /**
      * The object containing the model's original properties.
@@ -56,14 +56,18 @@ class Model implements ArrayAccess, JsonSerializable
      * Create a new model instance.
      *
      * @param Client $client
-     * @param Type|string $type
-     * @param object $object
+     * @param string $type
+     * @param object|array $properties
      */
-    public function __construct(Client $client, $type, $object = null)
+    public function __construct(Client $client, $type, $properties = [])
     {
+        if (!preg_match('/^([A-Z]+[a-z]*)+$/', $type)) {
+            throw new InvalidArgumentException('Type must be CapitalizedWords.');
+        }
+
         $this->client = $client;
-        $this->type = $type instanceof Type ? $type : new Type($type);
-        $this->object = is_object($object) ? $object : new \stdClass();
+        $this->type = $type;
+        $this->properties = (object)$properties;
 
         $this->syncOriginal();
     }
@@ -134,7 +138,7 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function __unset($property)
     {
-        unset($this->object->$property);
+        unset($this->properties->$property);
     }
 
     /**
@@ -164,7 +168,7 @@ class Model implements ArrayAccess, JsonSerializable
     public function delete($primaryKey = null)
     {
         if ($this->exists) {
-            $this->client->deleteObject($this->getType(), $this->key($primaryKey));
+            $this->client->deleteObject($this->type, $this->key($primaryKey));
             $this->exists = false;
 
             return true;
@@ -180,7 +184,7 @@ class Model implements ArrayAccess, JsonSerializable
     public function duplicate($newPrimaryKey = null)
     {
         if ($this->exists) {
-            $response = $this->client->cloneObject($this->getType(), $this->object, $this->getDirty(), $newPrimaryKey);
+            $response = $this->client->cloneObject($this->type, $this->original, $this->getDirty(), $newPrimaryKey);
 
             $instance = $this->newInstance($response);
             $instance->exists = true;
@@ -196,11 +200,11 @@ class Model implements ArrayAccess, JsonSerializable
      *
      * @param string $filter
      * @param array $sort
-     * @return KeyCollection|null
+     * @return KeyCollection
      */
     public function find($filter = null, $sort = null)
     {
-        $keys = $this->client->findObjects($this->getType(), $filter, $sort);
+        $keys = $this->client->findObjects($this->type, $filter, $sort);
 
         return $this->newKeyCollection((array)$keys);
     }
@@ -217,9 +221,9 @@ class Model implements ArrayAccess, JsonSerializable
             return null;
         }
 
-        $this->read($this->key($primaryKey));
+        $fresh = $this->read($this->key($primaryKey));
 
-        return $this;
+        return $fresh;
     }
 
     /**
@@ -229,13 +233,13 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function getDirty()
     {
-        return (object)array_diff_assoc((array)$this->object, (array)$this->original);
+        return (object)array_diff_assoc((array)$this->properties, (array)$this->original);
     }
 
     /**
      * Get the type of the model.
      *
-     * @return Type
+     * @return string
      */
     public function getType()
     {
@@ -272,7 +276,7 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function isDirty()
     {
-        return $this->original !== $this->object;
+        return $this->original != $this->properties;
     }
 
     /**
@@ -293,7 +297,7 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function jsonSerialize()
     {
-        return (array)$this->object;
+        return (array)$this->properties;
     }
 
     /**
@@ -317,12 +321,12 @@ class Model implements ArrayAccess, JsonSerializable
     /**
      * Create a new model instance.
      *
-     * @param object $object
+     * @param object|array $properties
      * @return Model
      */
-    public function newInstance($object = null)
+    public function newInstance($properties = [])
     {
-        return new static($this->client, $this->getType(), $object);
+        return new static($this->client, $this->type, $properties);
     }
 
     /**
@@ -333,7 +337,7 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function offsetExists($property)
     {
-        return $this->hasProperty($property);
+        return isset($this->$property);
     }
 
     /**
@@ -344,7 +348,7 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function offsetGet($property)
     {
-        return $this->getProperty($property);
+        return $this->$property;
     }
 
     /**
@@ -355,7 +359,7 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function offsetSet($property, $value)
     {
-        $this->setProperty($property, $value);
+        $this->$property = $value;
     }
 
     /**
@@ -365,7 +369,7 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function offsetUnset($property)
     {
-        unset($this->object->$property);
+        unset($this->$property);
     }
 
     /**
@@ -382,7 +386,7 @@ class Model implements ArrayAccess, JsonSerializable
             return null;
         }
 
-        $response = $this->client->readObject($this->getType(), $key);
+        $response = $this->client->readObject($this->type, $key);
 
         if (empty($response)) {
             return null;
@@ -415,23 +419,23 @@ class Model implements ArrayAccess, JsonSerializable
     /**
      * Persist the model in the web service.
      *
-     * @return Model
+     * @return bool
      */
     public function save()
     {
         if ($this->exists) {
             // Update an existing object in Pace.
-            $this->object = $this->client->updateObject($this->getType(), $this->object);
+            $this->properties = $this->client->updateObject($this->type, $this->properties);
 
         } else {
             // Create a new object in Pace and fill default values.
-            $this->object = $this->client->createObject($this->getType(), $this->object);
+            $this->properties = $this->client->createObject($this->type, $this->properties);
             $this->exists = true;
         }
 
         $this->syncOriginal();
 
-        return $this;
+        return true;
     }
 
     /**
@@ -490,13 +494,13 @@ class Model implements ArrayAccess, JsonSerializable
     protected function getProperty($property)
     {
         // First, check if the field exists.
-        if (property_exists($this->object, $property)) {
-            return $this->object->$property;
+        if (property_exists($this->properties, $property)) {
+            return $this->properties->$property;
         }
 
         // Next, check if a user defined field exists.
-        if (property_exists($this->object, "U_$property")) {
-            return $this->object->{"U_$property"};
+        if (property_exists($this->properties, "U_$property")) {
+            return $this->properties->{"U_$property"};
         }
     }
 
@@ -513,7 +517,7 @@ class Model implements ArrayAccess, JsonSerializable
         // contains the foreign key for a "belongs to" relationship.
         if ($this->hasProperty($method)) {
             if (!$this->relationLoaded($method)) {
-                $relatedType = Type::fromCamelCase($method);
+                $relatedType = Type::modelify($method);
                 $this->relations[$method] = $this->belongsTo($relatedType, $method);
             }
 
@@ -522,8 +526,9 @@ class Model implements ArrayAccess, JsonSerializable
 
         // Otherwise, the called method name should be a pluralized,
         // camel-cased related type for a "has many" relationship.
-        $type = Type::fromCamelCase(Inflector::singularize($method));
-        return $this->hasMany($type, $this->getType()->camelize());
+        $relatedType = Type::modelify(Type::singularize($method));
+        $foreignKey = Type::camelize($this->type);
+        return $this->hasMany($relatedType, $foreignKey);
     }
 
     /**
@@ -541,7 +546,7 @@ class Model implements ArrayAccess, JsonSerializable
             return 'id';
         }
 
-        return $this->getType()->camelize();
+        return Type::camelize($this->type);
     }
 
     /**
@@ -552,7 +557,7 @@ class Model implements ArrayAccess, JsonSerializable
      */
     protected function hasProperty($property)
     {
-        return property_exists($this->object, $property) || property_exists($this->object, "U_$property");
+        return property_exists($this->properties, $property) || property_exists($this->properties, "U_$property");
     }
 
     /**
@@ -614,7 +619,7 @@ class Model implements ArrayAccess, JsonSerializable
      */
     protected function restore()
     {
-        $this->object = clone $this->original;
+        $this->properties = clone $this->original;
     }
 
     /**
@@ -630,7 +635,7 @@ class Model implements ArrayAccess, JsonSerializable
             $value = $value->key();
         }
 
-        $this->object->$property = $value;
+        $this->properties->$property = $value;
     }
 
     /**
@@ -638,6 +643,6 @@ class Model implements ArrayAccess, JsonSerializable
      */
     protected function syncOriginal()
     {
-        $this->original = clone $this->object;
+        $this->original = clone $this->properties;
     }
 }

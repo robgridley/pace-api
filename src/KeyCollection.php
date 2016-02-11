@@ -4,9 +4,9 @@ namespace Pace;
 
 use Iterator;
 use Countable;
-use Exception;
 use ArrayAccess;
 use JsonSerializable;
+use RuntimeException;
 use OutOfBoundsException;
 
 class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializable
@@ -108,6 +108,22 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
     }
 
     /**
+     * Get the model for the specified key.
+     *
+     * @param string|int $key
+     * @return Model
+     * @throws OutOfBoundsException if the key does not exist.
+     */
+    public function get($key)
+    {
+        if (!$this->has($key)) {
+            throw new OutOfBoundsException("The key '$key' does not exist");
+        }
+
+        return $this->read($key);
+    }
+
+    /**
      * Check if the specified key exists.
      *
      * @param mixed $key
@@ -135,13 +151,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      */
     function jsonSerialize()
     {
-        $serializable = $this->all();
-
-        foreach ($serializable as $key => $model) {
-            $serializable[$key] = $model->jsonSerialize();
-        }
-
-        return $serializable;
+        return $this->all();
     }
 
     /**
@@ -187,16 +197,11 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      * Read the specified key.
      *
      * @param mixed $key
-     * @return null|Model
-     * @throws OutOfBoundsException if the key does not exist.
+     * @return Model
      */
     public function offsetGet($key)
     {
-        if (!$this->has($key)) {
-            throw new OutOfBoundsException("The key '$key' does not exist");
-        }
-
-        return $this->read($key);
+        return $this->get($key);
     }
 
     /**
@@ -204,26 +209,26 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      *
      * @param mixed $key
      * @param mixed $value
-     * @throws Exception
+     * @throws RuntimeException
      */
     public function offsetSet($key, $value)
     {
         $class = get_class($this);
 
-        throw new Exception("Unable to set key '$key': $class is immutable");
+        throw new RuntimeException("Unable to set key '$key': $class is immutable");
     }
 
     /**
      * Unset the value at the specified index.
      *
      * @param mixed $key
-     * @throws Exception
+     * @throws RuntimeException
      */
     public function offsetUnset($key)
     {
         $class = get_class($this);
 
-        throw new Exception("Unable to unset key '$key': $class is immutable");
+        throw new RuntimeException("Unable to unset key '$key': $class is immutable");
     }
 
     /**
