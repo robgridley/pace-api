@@ -200,12 +200,12 @@ class Model implements ArrayAccess, JsonSerializable
         if ($this->exists) {
             $response = $this->client->cloneObject($this->type, $this->original, $this->getDirty(), $newPrimaryKey);
 
-            $instance = $this->newInstance($response);
-            $instance->exists = true;
+            $model = $this->newInstance($response);
+            $model->exists = true;
 
             $this->restore();
 
-            return $instance;
+            return $model;
         }
     }
 
@@ -406,10 +406,10 @@ class Model implements ArrayAccess, JsonSerializable
             return null;
         }
 
-        $instance = $this->newInstance($response);
-        $instance->exists = true;
+        $model = $this->newInstance($response);
+        $model->exists = true;
 
-        return $instance;
+        return $model;
     }
 
     /**
