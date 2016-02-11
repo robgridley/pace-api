@@ -209,12 +209,34 @@ class ModelTest extends PHPUnit_Framework_TestCase
         ];
         $response = clone $properties;
         $response->id = 2;
-        $client->shouldReceive('createObject')->with('CSR', $properties)->once()->andReturn($response);
-        $model = new Model($client, 'CSR', $properties);
+        $client->shouldReceive('createObject')
+            ->with('CSR', Mockery::mustBe($properties))
+            ->once()
+            ->andReturn($response);
+        $model = new Model($client, 'CSR');
+        $model->name = 'John Smith';
+        $model->email = 'jsmith@printcompany.com';
         $this->assertTrue($model->save());
         $this->assertTrue($model->exists);
         $this->assertEquals(2, $model->id);
         $this->assertFalse($model->isDirty());
+    }
+
+    public function testCreateMethod()
+    {
+        $client = Mockery::mock(Client::class);
+        $properties = [
+            'name' => 'John Smith',
+            'email' => 'jsmith@printcompany.com'
+        ];
+        $response = (object)$properties;
+        $response->id = 2;
+        $client->shouldReceive('createObject')
+            ->with('CSR', Mockery::mustBe((object)$properties))
+            ->once()
+            ->andReturn($response);
+        $model = new Model($client, 'CSR');
+        $this->assertInstanceOf(Model::class, $model->create($properties));
     }
 
     public function testSplitKeyMethod()

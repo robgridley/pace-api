@@ -160,6 +160,20 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
+     * Create a new model from an array of properties and persist it to the web service.
+     *
+     * @param array $properties
+     * @return Model
+     */
+    public function create(array $properties)
+    {
+        $model = $this->newInstance($properties);
+        $model->save();
+
+        return $model;
+    }
+
+    /**
      * Delete the model from the web service.
      *
      * @param string $primaryKey
