@@ -433,7 +433,7 @@ class Model implements ArrayAccess, JsonSerializable
     /**
      * Persist the model in the web service.
      *
-     * @return bool
+     * @return bool|int Return primary key if it is named 'id', or just true for save of existing object 
      */
     public function save()
     {
@@ -444,11 +444,17 @@ class Model implements ArrayAccess, JsonSerializable
         } else {
             // Create a new object in Pace and fill default values.
             $this->properties = $this->client->createObject($this->type, $this->properties);
+            //print_r($this->properties);
             $this->exists = true;
+            // TOOD deal with 'job','jobPart' (and others if any) where the primary key is not 'id'
+            if(isset($this->properties->id)){
+                $id = $this->properties->id;
+            }
         }
 
         $this->syncOriginal();
 
+        if(isset($id)) return $id;
         return true;
     }
 
