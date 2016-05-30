@@ -175,6 +175,18 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
     }
 
     /**
+     * Read only the last key.
+     *
+     * @return Model
+     */
+    public function last()
+    {
+        $keys = array_reverse($this->keys);
+
+        return $this->read(reset($keys));
+    }
+
+    /**
      * Move forward to the next key.
      */
     public function next()

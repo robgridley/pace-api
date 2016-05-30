@@ -58,6 +58,14 @@ class KeyCollectionTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(Model::class, $collection->first());
     }
 
+    public function testLastMethod()
+    {
+        $model = Mockery::mock(Model::class);
+        $collection = new KeyCollection($model, [4, 5, 6]);
+        $model->shouldReceive('read')->with(6)->once()->andReturnSelf();
+        $this->assertInstanceOf(Model::class, $collection->last());
+    }
+
     /**
      * @expectedException \OutOfBoundsException
      */
