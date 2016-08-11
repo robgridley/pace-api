@@ -675,7 +675,9 @@ class Model implements ArrayAccess, JsonSerializable
         if (!isset($tags)) {
             $tags = [];
         }
-        $tags[] = $tag;
+        if (($key = array_search($tag, $tags)) === false) {
+            $tags[] = $tag;
+        }
         $this->setProperty('tags', json_encode($tags));
     }
 
