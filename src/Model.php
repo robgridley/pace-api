@@ -659,4 +659,38 @@ class Model implements ArrayAccess, JsonSerializable
     {
         $this->original = clone $this->properties;
     }
+
+    public function getTags()
+    {
+        $tags = $this->getProperty('tags');
+        if (isset($tags)) {
+            return json_decode($tags, true);
+        }
+        return null;
+    }
+
+    public function addTag($tag)
+    {
+        $tags = $this->getTags();
+        if (!isset($tags)) {
+            $tags = [];
+        }
+        $tags[] = $tag;
+        $this->setProperty('tags', json_encode($tags));
+    }
+
+    public function removeTag($tag)
+    {
+        $tags = $this->getTags();
+        if (isset($tags)) {
+            if (($key = array_search($tag, $tags)) !== false) {
+                unset($tags[$key]);
+            }
+            if (count($tags)) {
+                $this->setProperty('tags', json_encode($tags));
+            } else {
+                $this->setProperty('tags', '');
+            }
+        }
+    }
 }
