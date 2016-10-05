@@ -675,7 +675,7 @@ class Model implements ArrayAccess, JsonSerializable
         if (!isset($tags)) {
             $tags = [];
         }
-        if (($key = array_search($tag, $tags)) === false) {
+        if (($key = array_search((int)$tag, $tags)) === false) {
             $tags[] = $tag;
         }
         $this->setProperty('tags', json_encode($tags));
@@ -685,7 +685,7 @@ class Model implements ArrayAccess, JsonSerializable
     {
         $tags = $this->getTags();
         if (isset($tags)) {
-            if (($key = array_search($tag, $tags)) !== false) {
+            if (($key = array_search((int)$tag, $tags)) !== false) {
                 unset($tags[$key]);
             }
             if (count($tags)) {
