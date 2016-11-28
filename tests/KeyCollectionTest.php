@@ -162,4 +162,32 @@ class KeyCollectionTest extends PHPUnit_Framework_TestCase
         $collection = new KeyCollection($model, []);
         $this->assertNull($collection->current());
     }
+
+    public function testPluckMethod()
+    {
+        $model = Mockery::mock(Model::class);
+        $collection = new KeyCollection($model, [1, 2]);
+        $model->shouldReceive('read')->with(1)->once()->andReturnSelf();
+        $model->shouldReceive('read')->with(2)->once()->andReturnSelf();
+        $model->shouldReceive('getProperty')->with('value')->once()->andReturn('Test 1');
+        $model->shouldReceive('getProperty')->with('value')->once()->andReturn('Test 2');
+        $list = $collection->pluck('value');
+        $this->assertEquals('Test 1', $list[0]);
+        $this->assertEquals('Test 2', $list[1]);
+    }
+
+    public function testPluckMethodWithKey()
+    {
+        $model = Mockery::mock(Model::class);
+        $collection = new KeyCollection($model, [1, 2]);
+        $model->shouldReceive('read')->with(1)->once()->andReturnSelf();
+        $model->shouldReceive('read')->with(2)->once()->andReturnSelf();
+        $model->shouldReceive('getProperty')->with('key')->once()->andReturn(3);
+        $model->shouldReceive('getProperty')->with('key')->once()->andReturn(4);
+        $model->shouldReceive('getProperty')->with('value')->once()->andReturn('Test 1');
+        $model->shouldReceive('getProperty')->with('value')->once()->andReturn('Test 2');
+        $list = $collection->pluck('value', 'key');
+        $this->assertEquals('Test 1', $list[3]);
+        $this->assertEquals('Test 2', $list[4]);
+    }
 }

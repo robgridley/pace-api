@@ -251,6 +251,25 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
+     * Get the specified property or null if it does not exist.
+     *
+     * @param string $property
+     * @return mixed
+     */
+    public function getProperty($property)
+    {
+        // First, check if the field exists.
+        if (property_exists($this->properties, $property)) {
+            return $this->properties->$property;
+        }
+
+        // Next, check if a user defined field exists.
+        if (property_exists($this->properties, "U_$property")) {
+            return $this->properties->{"U_$property"};
+        }
+    }
+
+    /**
      * Get the type of the model.
      *
      * @return string
@@ -453,6 +472,22 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
+     * Set the specified model property to the supplied value.
+     *
+     * @param string $property
+     * @param mixed $value
+     */
+    public function setProperty($property, $value)
+    {
+        // Check to see if the value is a related model.
+        if ($value instanceof self) {
+            $value = $value->key();
+        }
+
+        $this->properties->$property = $value;
+    }
+
+    /**
      * Split a compound key into an array.
      *
      * @param string $key
@@ -497,25 +532,6 @@ class Model implements ArrayAccess, JsonSerializable
             $this->splitKey($foreignKey),
             $this->splitKey($this->key($primaryKey))
         );
-    }
-
-    /**
-     * Get the specified property or null if it does not exist.
-     *
-     * @param string $property
-     * @return mixed
-     */
-    protected function getProperty($property)
-    {
-        // First, check if the field exists.
-        if (property_exists($this->properties, $property)) {
-            return $this->properties->$property;
-        }
-
-        // Next, check if a user defined field exists.
-        if (property_exists($this->properties, "U_$property")) {
-            return $this->properties->{"U_$property"};
-        }
     }
 
     /**
@@ -634,22 +650,6 @@ class Model implements ArrayAccess, JsonSerializable
     protected function restore()
     {
         $this->properties = clone $this->original;
-    }
-
-    /**
-     * Set the specified model property to the supplied value.
-     *
-     * @param string $property
-     * @param mixed $value
-     */
-    protected function setProperty($property, $value)
-    {
-        // Check to see if the value is a related model.
-        if ($value instanceof self) {
-            $value = $value->key();
-        }
-
-        $this->properties->$property = $value;
     }
 
     /**

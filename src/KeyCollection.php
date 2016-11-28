@@ -258,6 +258,29 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
     }
 
     /**
+     * Get the values of a given key.
+     *
+     * @param string $value
+     * @param string $key
+     * @return array
+     */
+    public function pluck($value, $key = null)
+    {
+        $models = $this->all();
+        $results = [];
+
+        foreach ($models as $model) {
+            if (!is_null($key)) {
+                $results[$model->$key] = $model->$value;
+            } else {
+                $results[] = $model->$value;
+            }
+        }
+
+        return $results;
+    }
+
+    /**
      * Rewind to the first key.
      */
     public function rewind()
