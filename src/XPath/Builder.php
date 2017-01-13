@@ -5,10 +5,11 @@ namespace Pace\XPath;
 use Closure;
 use DateTime;
 use Pace\Model;
+use IteratorAggregate;
 use InvalidArgumentException;
 use Pace\ModelNotFoundException;
 
-class Builder
+class Builder implements IteratorAggregate
 {
     /**
      * Valid operators.
@@ -111,7 +112,7 @@ class Builder
     /**
      * Perform the find request.
      *
-     * @return mixed
+     * @return \Pace\KeyCollection
      */
     public function find()
     {
@@ -158,9 +159,19 @@ class Builder
     /**
      * A more "Eloquent" alias for find().
      *
-     * @return mixed
+     * @return \Pace\KeyCollection
      */
     public function get()
+    {
+        return $this->find();
+    }
+
+    /**
+     * Get an iterator by calling find().
+     *
+     * @return \Pace\KeyCollection
+     */
+    public function getIterator()
     {
         return $this->find();
     }
