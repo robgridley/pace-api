@@ -689,7 +689,7 @@ class Model implements ArrayAccess, JsonSerializable
                 unset($tags[$key]);
             }
             if (count($tags)) {
-                $this->setProperty('tags', json_encode($tags));
+                $this->setProperty('tags', json_encode(array_values($tags)));
             } else {
                 $this->setProperty('tags', '');
             }
