@@ -96,6 +96,17 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
     }
 
     /**
+     * Filter the keys in the collection using a callback.
+     *
+     * @param callable $callback
+     * @return KeyCollection
+     */
+    public function filterKeys(callable $callback)
+    {
+        return $this->fresh(array_values(array_filter($this->keys, $callback)));
+    }
+
+    /**
      * Read only the first key.
      *
      * @return Model

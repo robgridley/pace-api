@@ -190,4 +190,15 @@ class KeyCollectionTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('Test 1', $list[3]);
         $this->assertEquals('Test 2', $list[4]);
     }
+
+    public function testFilterKeys()
+    {
+        $model = Mockery::mock(Model::class);
+        $collection = new KeyCollection($model, [1, 2, 3, 4]);
+        $filtered = $collection->filterKeys(function ($key) {
+            return $key % 2 == 0;
+        });
+        $this->assertInstanceOf(KeyCollection::class, $filtered);
+        $this->assertEquals([2, 4], $filtered->keys());
+    }
 }
