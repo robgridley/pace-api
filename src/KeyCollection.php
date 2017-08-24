@@ -96,6 +96,17 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
     }
 
     /**
+     * Filter the keys in the collection using a callback.
+     *
+     * @param callable $callback
+     * @return KeyCollection
+     */
+    public function filterKeys(callable $callback)
+    {
+        return $this->fresh(array_values(array_filter($this->keys, $callback)));
+    }
+
+    /**
      * Read only the first key.
      *
      * @return Model
@@ -255,6 +266,29 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
         $offset = max($page - 1, 0) * $perPage;
 
         return $this->slice($offset, $perPage);
+    }
+
+    /**
+     * Get the values of a given key.
+     *
+     * @param string $value
+     * @param string $key
+     * @return array
+     */
+    public function pluck($value, $key = null)
+    {
+        $models = $this->all();
+        $results = [];
+
+        foreach ($models as $model) {
+            if (!is_null($key)) {
+                $results[$model->$key] = $model->$value;
+            } else {
+                $results[] = $model->$value;
+            }
+        }
+
+        return $results;
     }
 
     /**
