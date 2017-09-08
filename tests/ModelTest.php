@@ -30,8 +30,6 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($model->name, 'John Smith');
         unset($model->name);
         $this->assertFalse(isset($model->name));
-        $model->U_userDefinedField = true;
-        $this->assertTrue(isset($model->userDefinedField));
     }
 
     public function testPrimaryKeysCanBeSpecifiedOrGuessed()
@@ -64,7 +62,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
     public function testReadMethod()
     {
         $client = Mockery::mock(Client::class);
-        $client->shouldReceive('readObject')->with('CSR', 3)->once()->andReturn((object)['id' => 3]);
+        $client->shouldReceive('readObject')->with('CSR', 3)->once()->andReturn(['id' => 3]);
         $model = new Model($client, 'CSR');
         $read = $model->read(3);
         $this->assertInstanceOf(Model::class, $read);
@@ -85,7 +83,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $client->shouldReceive('readObject')
             ->once()
             ->with('SalesPerson', 5)
-            ->andReturn((object)['id' => 5, 'name' => 'John Smith']);
+            ->andReturn(['id' => 5, 'name' => 'John Smith']);
         $model = new Model($client, 'SalesPerson');
         $this->assertInstanceOf(Model::class, $model->readOrFail(5));
     }
@@ -174,27 +172,27 @@ class ModelTest extends PHPUnit_Framework_TestCase
     public function testJsonSerializable()
     {
         $client = Mockery::mock(Client::class);
-        $properties = [
+        $attributes = [
             'id' => 1,
             'name' => 'John Smith',
             'email' => 'jsmith@printcompany.com'
         ];
-        $model = new Model($client, 'CSR', $properties);
+        $model = new Model($client, 'CSR', $attributes);
         $this->assertInstanceOf('JsonSerializable', $model);
-        $this->assertEquals($properties, $model->jsonSerialize());
+        $this->assertEquals($attributes, $model->jsonSerialize());
     }
 
     public function testSaveOnExistingModel()
     {
         $client = Mockery::mock(Client::class);
-        $properties = (object)[
+        $attributes = [
             'id' => 1,
             'name' => 'John Smith',
             'email' => 'jsmith@printcompany.com'
         ];
-        $response = clone $properties;
-        $client->shouldReceive('updateObject')->with('CSR', $properties)->once()->andReturn($response);
-        $model = new Model($client, 'CSR', $properties);
+        $response = $attributes;
+        $client->shouldReceive('updateObject')->with('CSR', $attributes)->once()->andReturn($response);
+        $model = new Model($client, 'CSR', $attributes);
         $model->exists = true;
         $this->assertTrue($model->save());
         $this->assertFalse($model->isDirty());
@@ -203,14 +201,14 @@ class ModelTest extends PHPUnit_Framework_TestCase
     public function testSaveOnNewModel()
     {
         $client = Mockery::mock(Client::class);
-        $properties = (object)[
+        $attributes = [
             'name' => 'John Smith',
             'email' => 'jsmith@printcompany.com'
         ];
-        $response = clone $properties;
-        $response->id = 2;
+        $response = $attributes;
+        $response['id'] = 2;
         $client->shouldReceive('createObject')
-            ->with('CSR', Mockery::mustBe($properties))
+            ->with('CSR', Mockery::mustBe($attributes))
             ->once()
             ->andReturn($response);
         $model = new Model($client, 'CSR');
@@ -225,18 +223,18 @@ class ModelTest extends PHPUnit_Framework_TestCase
     public function testCreateMethod()
     {
         $client = Mockery::mock(Client::class);
-        $properties = [
+        $attributes = [
             'name' => 'John Smith',
             'email' => 'jsmith@printcompany.com'
         ];
-        $response = (object)$properties;
-        $response->id = 2;
+        $response = $attributes;
+        $response['id'] = 2;
         $client->shouldReceive('createObject')
-            ->with('CSR', Mockery::mustBe((object)$properties))
+            ->with('CSR', Mockery::mustBe($attributes))
             ->once()
             ->andReturn($response);
         $model = new Model($client, 'CSR');
-        $this->assertInstanceOf(Model::class, $model->create($properties));
+        $this->assertInstanceOf(Model::class, $model->create($attributes));
     }
 
     public function testSplitKeyMethod()
@@ -252,13 +250,13 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $client = Mockery::mock(Client::class);
         $model = new Model($client, 'CSR', ['name' => 'John Smith', 'email' => 'jsmith@printcompany.com']);
         $model->email = 'john.smith@printcompany.com';
-        $this->assertEquals((object)['email' => 'john.smith@printcompany.com'], $model->getDirty());
+        $this->assertEquals(['email' => 'john.smith@printcompany.com'], $model->getDirty());
     }
 
     public function testDuplicateMethod()
     {
         $client = Mockery::mock(Client::class);
-        $properties = [
+        $attributes = [
             'id' => 5001,
             'description' => 'Ground',
             'provider' => 5001
@@ -266,13 +264,13 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $client->shouldReceive('cloneObject')
             ->with(
                 'ShipVia',
-                Mockery::mustBe((object)$properties),
-                Mockery::mustBe((object)['description' => 'Express']),
+                Mockery::mustBe($attributes),
+                Mockery::mustBe(['description' => 'Express']),
                 null
             )
             ->once()
-            ->andReturn((object)['id' => 5002, 'description' => 'Express', 'provider' => 5001]);
-        $model = new Model($client, 'ShipVia', $properties);
+            ->andReturn(['id' => 5002, 'description' => 'Express', 'provider' => 5001]);
+        $model = new Model($client, 'ShipVia', $attributes);
         $model->exists = true;
         $model->description = 'Express';
         $duplicate = $model->duplicate();
@@ -287,7 +285,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
     public function testDuplicateMethodWithNewKey()
     {
         $client = Mockery::mock(Client::class);
-        $properties = [
+        $attributes = [
             'id' => 5001,
             'description' => 'Ground',
             'provider' => 5001
@@ -295,13 +293,13 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $client->shouldReceive('cloneObject')
             ->with(
                 'ShipVia',
-                Mockery::mustBe((object)$properties),
-                Mockery::mustBe((object)['description' => 'Express']),
+                Mockery::mustBe($attributes),
+                Mockery::mustBe(['description' => 'Express']),
                 5002
             )
             ->once()
-            ->andReturn((object)['id' => 5002, 'description' => 'Express', 'provider' => 5001]);
-        $model = new Model($client, 'ShipVia', $properties);
+            ->andReturn(['id' => 5002, 'description' => 'Express', 'provider' => 5001]);
+        $model = new Model($client, 'ShipVia', $attributes);
         $model->exists = true;
         $model->description = 'Express';
         $model->duplicate(5002);
@@ -349,9 +347,9 @@ class ModelTest extends PHPUnit_Framework_TestCase
     public function testCastToString()
     {
         $client = Mockery::mock(Client::class);
-        $properties = ['id' => 1, 'name' => 'John Smith'];
-        $model = new Model($client, 'CSR', $properties);
-        $this->assertEquals(json_encode($properties), $model);
+        $attributes = ['id' => 1, 'name' => 'John Smith'];
+        $model = new Model($client, 'CSR', $attributes);
+        $this->assertEquals(json_encode($attributes), $model);
     }
 
     public function testDeleteMethod()
@@ -372,7 +370,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $client->shouldReceive('readObject')
             ->with('CSR', 3)
             ->once()
-            ->andReturn((object)['id' => 3, 'name' => 'John Smith']);
+            ->andReturn(['id' => 3, 'name' => 'John Smith']);
         $model = new Model($client, 'CSR');
         $model->id = 3;
         $model->exists = true;

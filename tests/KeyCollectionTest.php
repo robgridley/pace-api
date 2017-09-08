@@ -169,8 +169,8 @@ class KeyCollectionTest extends PHPUnit_Framework_TestCase
         $collection = new KeyCollection($model, [1, 2]);
         $model->shouldReceive('read')->with(1)->once()->andReturnSelf();
         $model->shouldReceive('read')->with(2)->once()->andReturnSelf();
-        $model->shouldReceive('getProperty')->with('value')->once()->andReturn('Test 1');
-        $model->shouldReceive('getProperty')->with('value')->once()->andReturn('Test 2');
+        $model->shouldReceive('getAttribute')->with('value')->once()->andReturn('Test 1');
+        $model->shouldReceive('getAttribute')->with('value')->once()->andReturn('Test 2');
         $list = $collection->pluck('value');
         $this->assertEquals('Test 1', $list[0]);
         $this->assertEquals('Test 2', $list[1]);
@@ -182,10 +182,10 @@ class KeyCollectionTest extends PHPUnit_Framework_TestCase
         $collection = new KeyCollection($model, [1, 2]);
         $model->shouldReceive('read')->with(1)->once()->andReturnSelf();
         $model->shouldReceive('read')->with(2)->once()->andReturnSelf();
-        $model->shouldReceive('getProperty')->with('key')->once()->andReturn(3);
-        $model->shouldReceive('getProperty')->with('key')->once()->andReturn(4);
-        $model->shouldReceive('getProperty')->with('value')->once()->andReturn('Test 1');
-        $model->shouldReceive('getProperty')->with('value')->once()->andReturn('Test 2');
+        $model->shouldReceive('getAttribute')->with('key')->once()->andReturn(3);
+        $model->shouldReceive('getAttribute')->with('key')->once()->andReturn(4);
+        $model->shouldReceive('getAttribute')->with('value')->once()->andReturn('Test 1');
+        $model->shouldReceive('getAttribute')->with('value')->once()->andReturn('Test 2');
         $list = $collection->pluck('value', 'key');
         $this->assertEquals('Test 1', $list[3]);
         $this->assertEquals('Test 2', $list[4]);
