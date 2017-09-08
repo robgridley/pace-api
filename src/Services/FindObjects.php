@@ -19,7 +19,7 @@ class FindObjects extends Service
 
         $response = $this->soap->find($request);
 
-        return isset($response->out->string) ? $response->out->string : [];
+        return isset($response->out->string) ? (array)$response->out->string : [];
     }
 
     /**
@@ -36,6 +36,6 @@ class FindObjects extends Service
 
         $response = $this->soap->findAndSort($request);
 
-        return isset($response->out->string) ? $response->out->string : [];
+        return isset($response->out->string) ? (array)$response->out->string : [];
     }
 }
