@@ -34,7 +34,7 @@ class FindObjects extends Service
     {
         $request = ['in0' => $object, 'in1' => $filter, 'in2' => $sort];
 
-        $response = $this->soap->find($request);
+        $response = $this->soap->findAndSort($request);
 
         return isset($response->out->string) ? $response->out->string : [];
     }
