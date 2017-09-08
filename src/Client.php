@@ -64,6 +64,16 @@ class Client
     }
 
     /**
+     * Get an instance of the attachment service.
+     *
+     * @return \Pace\Services\AttachmentService
+     */
+    public function attachment()
+    {
+        return $this->service('AttachmentService');
+    }
+
+    /**
      * Clone an object.
      *
      * @param string $object

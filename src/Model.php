@@ -5,11 +5,14 @@ namespace Pace;
 use ArrayAccess;
 use JsonSerializable;
 use Pace\XPath\Builder;
+use Pace\Model\Attachments;
 use InvalidArgumentException;
 use UnexpectedValueException;
 
 class Model implements ArrayAccess, JsonSerializable
 {
+    use Attachments;
+
     /**
      * The model type.
      *
