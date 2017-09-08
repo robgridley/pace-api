@@ -357,6 +357,22 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
+     * Fetch a "morph many" relationship.
+     *
+     * @param string $relatedType
+     * @param string $baseObject
+     * @param string $baseObjectKey
+     * @param string|null $primaryKey
+     * @return Builder
+     */
+    public function morphMany($relatedType, $baseObject = 'baseObject', $baseObjectKey = 'baseObjectKey', $primaryKey = null)
+    {
+        return $this->client->model($relatedType)
+            ->filter('@' . $baseObject, $this->type)
+            ->filter('@' . $baseObjectKey, $this->key($primaryKey));
+    }
+
+    /**
      * Create a new model instance.
      *
      * @param array $attributes
