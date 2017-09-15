@@ -11,24 +11,25 @@ trait Attachments
      *
      * @param string $name
      * @param string $content
-     * @param int|string|null $primaryKey
+     * @param string|null $field
+     * @param int|string|null $keyName
      * @return \Pace\Model
      */
-    public function attach($name, $content, $primaryKey = null)
+    public function attachFile($name, $content, $field = null, $keyName = null)
     {
-        $key = $this->client->attachment()->add($this->type, $this->key($primaryKey), null, $name, $content);
+        $key = $this->client->attachment()->add($this->type, $this->key($keyName), $field, $name, $content);
 
         return $this->client->model('FileAttachment')->read($key);
     }
 
     /**
-     * Get the model's attachments.
+     * The file attachments relationship.
      *
-     * @return \Pace\KeyCollection
+     * @return \Pace\XPath\Builder
      */
-    public function attachments()
+    public function fileAttachments()
     {
-        return $this->morphMany('FileAttachment')->get();
+        return $this->morphMany('FileAttachment');
     }
 
     /**

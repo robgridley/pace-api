@@ -12,12 +12,12 @@ class AttachmentService extends Service
      *
      * @param string $object
      * @param mixed $key
-     * @param string|null $attribute
+     * @param string|null $field
      * @param string $name
      * @param string $content
      * @return string
      */
-    public function add($object, $key, $attribute, $name, $content)
+    public function add($object, $key, $field, $name, $content)
     {
         $attachment = [
             'name' => $name,
@@ -29,7 +29,7 @@ class AttachmentService extends Service
         $request = [
             'in0' => $object,
             'in1' => $key,
-            'in2' => $attribute,
+            'in2' => $field,
             'in3' => $attachment,
         ];
 

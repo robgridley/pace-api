@@ -5,11 +5,10 @@ namespace Pace\XPath;
 use Closure;
 use DateTime;
 use Pace\Model;
-use IteratorAggregate;
 use InvalidArgumentException;
 use Pace\ModelNotFoundException;
 
-class Builder implements IteratorAggregate
+class Builder
 {
     /**
      * Valid operators.
@@ -167,16 +166,6 @@ class Builder implements IteratorAggregate
     }
 
     /**
-     * Get an iterator by calling find().
-     *
-     * @return \Pace\KeyCollection
-     */
-    public function getIterator()
-    {
-        return $this->find();
-    }
-
-    /**
      * Add a nested filter using a callback.
      *
      * @param Closure $callback
@@ -186,7 +175,8 @@ class Builder implements IteratorAggregate
     public function nestedFilter(Closure $callback, $boolean = 'and')
     {
         $builder = new static;
-        call_user_func($callback, $builder);
+
+        $callback($builder);
 
         $this->filters[] = compact('builder', 'boolean');
 

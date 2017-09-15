@@ -4,6 +4,7 @@ use Pace\Model;
 use Pace\Client;
 use Pace\KeyCollection;
 use Pace\XPath\Builder;
+use Pace\Services\AttachmentService;
 
 class ModelTest extends PHPUnit_Framework_TestCase
 {
@@ -153,6 +154,23 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(KeyCollection::class, $builder->get());
     }
 
+    public function testMorphManyMethod()
+    {
+        $client = Mockery::mock(Client::class);
+        $model = new Model($client, 'Job');
+        $model->job = '12345';
+        $related = Mockery::mock(Model::class);
+        $client->shouldReceive('model')->with('FileAttachment')->once()->andReturn($related);
+        $builder = $model->morphMany('FileAttachment');
+        $this->assertInstanceOf(Builder::class, $builder);
+        $collection = Mockery::mock(KeyCollection::class);
+        $related->shouldReceive('find')
+            ->with('@baseObject = "Job" and @baseObjectKey = "12345"', null)
+            ->once()
+            ->andReturn($collection);
+        $this->assertInstanceOf(KeyCollection::class, $builder->get());
+    }
+
     public function testIsDirtyMethod()
     {
         $client = Mockery::mock(Client::class);
@@ -172,14 +190,20 @@ class ModelTest extends PHPUnit_Framework_TestCase
     public function testJsonSerializable()
     {
         $client = Mockery::mock(Client::class);
+        $model = new Model($client, 'CSR');
+        $this->assertInstanceOf(JsonSerializable::class, $model);
+    }
+
+    public function testArrayable()
+    {
+        $client = Mockery::mock(Client::class);
         $attributes = [
             'id' => 1,
             'name' => 'John Smith',
             'email' => 'jsmith@printcompany.com'
         ];
         $model = new Model($client, 'CSR', $attributes);
-        $this->assertInstanceOf('JsonSerializable', $model);
-        $this->assertEquals($attributes, $model->jsonSerialize());
+        $this->assertEquals($attributes, $model->toArray());
     }
 
     public function testSaveOnExistingModel()

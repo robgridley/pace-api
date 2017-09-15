@@ -85,7 +85,7 @@ class Model implements ArrayAccess, JsonSerializable
     public function __call($method, array $arguments)
     {
         if ($this->isBuilderMethod($method)) {
-            return call_user_func_array([$this->newBuilder(), $method], $arguments);
+            return $this->newBuilder()->$method(...$arguments);
         }
 
         return $this->getRelatedFromMethod($method);
@@ -179,13 +179,13 @@ class Model implements ArrayAccess, JsonSerializable
     /**
      * Delete the model from the web service.
      *
-     * @param string $primaryKey
+     * @param string $keyName
      * @return bool|null
      */
-    public function delete($primaryKey = null)
+    public function delete($keyName = null)
     {
         if ($this->exists) {
-            $this->client->deleteObject($this->type, $this->key($primaryKey));
+            $this->client->deleteObject($this->type, $this->key($keyName));
             $this->exists = false;
 
             return true;
@@ -201,9 +201,9 @@ class Model implements ArrayAccess, JsonSerializable
     public function duplicate($newKey = null)
     {
         if ($this->exists) {
-            $response = $this->client->cloneObject($this->type, $this->original, $this->getDirty(), $newKey);
+            $attributes = $this->client->cloneObject($this->type, $this->original, $this->getDirty(), $newKey);
 
-            $model = $this->newInstance($response);
+            $model = $this->newInstance($attributes);
             $model->exists = true;
 
             $this->restore();
@@ -229,16 +229,16 @@ class Model implements ArrayAccess, JsonSerializable
     /**
      * Refresh the attributes of the model from the web service.
      *
-     * @param string $primaryKey
+     * @param string $keyName
      * @return Model|null
      */
-    public function fresh($primaryKey = null)
+    public function fresh($keyName = null)
     {
         if (!$this->exists) {
             return null;
         }
 
-        $fresh = $this->read($this->key($primaryKey));
+        $fresh = $this->read($this->key($keyName));
 
         return $fresh;
     }
@@ -292,19 +292,19 @@ class Model implements ArrayAccess, JsonSerializable
      *
      * @param string $relatedType
      * @param string $foreignKey
-     * @param string $primaryKey
+     * @param string $keyName
      * @return Builder
      */
-    public function hasMany($relatedType, $foreignKey, $primaryKey = null)
+    public function hasMany($relatedType, $foreignKey, $keyName = null)
     {
         $builder = $this->client->model($relatedType)->newBuilder();
 
         if ($this->isCompoundKey($foreignKey)) {
-            foreach ($this->getCompoundKeyArray($foreignKey, $primaryKey) as $attribute => $value) {
+            foreach ($this->getCompoundKeyArray($foreignKey, $keyName) as $attribute => $value) {
                 $builder->filter('@' . $attribute, $value);
             }
         } else {
-            $builder->filter('@' . $foreignKey, $this->key($primaryKey));
+            $builder->filter('@' . $foreignKey, $this->key($keyName));
         }
 
         return $builder;
@@ -338,19 +338,19 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function jsonSerialize()
     {
-        return $this->attributes;
+        return $this->toArray();
     }
 
     /**
      * Get the model's primary key.
      *
-     * @param string $primaryKey
+     * @param string $keyName
      * @return string|int
      * @throws UnexpectedValueException if the key is null.
      */
-    public function key($primaryKey = null)
+    public function key($keyName = null)
     {
-        $key = $this->getAttribute($primaryKey ?: $this->guessPrimaryKey());
+        $key = $this->getAttribute($keyName ?: $this->guessPrimaryKey());
 
         if ($key == null) {
             throw new UnexpectedValueException('Key must not be null.');
@@ -365,14 +365,17 @@ class Model implements ArrayAccess, JsonSerializable
      * @param string $relatedType
      * @param string $baseObject
      * @param string $baseObjectKey
-     * @param string|null $primaryKey
+     * @param string|null $keyName
      * @return Builder
      */
-    public function morphMany($relatedType, $baseObject = 'baseObject', $baseObjectKey = 'baseObjectKey', $primaryKey = null)
+    public function morphMany($relatedType, $baseObject = 'baseObject', $baseObjectKey = 'baseObjectKey', $keyName = null)
     {
-        return $this->client->model($relatedType)
-            ->filter('@' . $baseObject, $this->type)
-            ->filter('@' . $baseObjectKey, $this->key($primaryKey));
+        $builder = $this->client->model($relatedType)->newBuilder();
+
+        $builder->filter('@' . $baseObject, $this->type);
+        $builder->filter('@' . $baseObjectKey, $this->key($keyName));
+
+        return $builder;
     }
 
     /**
@@ -437,8 +440,8 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function read($key)
     {
-        // This is intentionally not strict. The API considers an
-        // integer 0 to be null and will respond with a fault.
+        // This is intentionally not strict. The web service considers
+        // an integer 0 to be null and will respond with a fault.
         if ($key == null) {
             return null;
         }
@@ -481,11 +484,11 @@ class Model implements ArrayAccess, JsonSerializable
     public function save()
     {
         if ($this->exists) {
-            // Update an existing object in Pace.
+            // Update an existing object.
             $this->attributes = $this->client->updateObject($this->type, $this->attributes);
 
         } else {
-            // Create a new object in Pace and fill default values.
+            // Create a new object and fill default values.
             $this->attributes = $this->client->createObject($this->type, $this->attributes);
             $this->exists = true;
         }
@@ -527,6 +530,16 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
+     * Convert the instance to an array.
+     *
+     * @return array
+     */
+    public function toArray()
+    {
+        return $this->attributes;
+    }
+
+    /**
      * Unset the specified model attribute.
      *
      * @param string $name
@@ -557,14 +570,14 @@ class Model implements ArrayAccess, JsonSerializable
      * Get a compound key array for a "has many" relationship.
      *
      * @param string $foreignKey
-     * @param string $primaryKey
+     * @param string $keyName
      * @return array
      */
-    protected function getCompoundKeyArray($foreignKey, $primaryKey)
+    protected function getCompoundKeyArray($foreignKey, $keyName)
     {
         return array_combine(
             $this->splitKey($foreignKey),
-            $this->splitKey($this->key($primaryKey))
+            $this->splitKey($this->key($keyName))
         );
     }
 
@@ -596,12 +609,16 @@ class Model implements ArrayAccess, JsonSerializable
     }
 
     /**
-     * Attempt to guess the primary key field.
+     * Attempt to guess the primary key name.
      *
      * @return string
      */
     protected function guessPrimaryKey()
     {
+        if ($keyName = Type::keyName($this->type)) {
+            return $keyName;
+        }
+
         if ($this->hasAttribute(Client::PRIMARY_KEY)) {
             return Client::PRIMARY_KEY;
         }
