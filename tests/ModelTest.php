@@ -4,7 +4,6 @@ use Pace\Model;
 use Pace\Client;
 use Pace\KeyCollection;
 use Pace\XPath\Builder;
-use Pace\Services\AttachmentService;
 
 class ModelTest extends PHPUnit_Framework_TestCase
 {
@@ -60,7 +59,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $model->key();
     }
 
-    public function testReadMethod()
+    public function testRead()
     {
         $client = Mockery::mock(Client::class);
         $client->shouldReceive('readObject')->with('CSR', 3)->once()->andReturn(['id' => 3]);
@@ -71,14 +70,14 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($read->exists);
     }
 
-    public function testReadMethodWithNullKey()
+    public function testReadWithNullKey()
     {
         $client = Mockery::mock(Client::class);
         $model = new Model($client, 'CSR');
         $this->assertNull($model->read(null));
     }
 
-    public function testReadOrFailMethod()
+    public function testReadOrFail()
     {
         $client = Mockery::mock(Client::class);
         $client->shouldReceive('readObject')
@@ -92,7 +91,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
     /**
      * @expectedException Pace\ModelNotFoundException
      */
-    public function testReadOrFailMethodThrowsModelNotFoundException()
+    public function testReadOrFailThrowsModelNotFoundException()
     {
         $client = Mockery::mock(Client::class);
         $client->shouldReceive('readObject')->once()->with('SalesPerson', 5)->andReturn(null);
@@ -100,7 +99,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $model->readOrFail(5);
     }
 
-    public function testBelongsToMethod()
+    public function testBelongsTo()
     {
         $client = Mockery::mock(Client::class);
         $model = new Model($client, 'Job');
@@ -111,7 +110,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($related, $model->belongsTo('CSR', 'csr'));
     }
 
-    public function testBelongsToMethodWithCompoundKey()
+    public function testBelongsToWithCompoundKey()
     {
         $client = Mockery::mock(Client::class);
         $model = new Model($client, 'JobMaterial');
@@ -123,7 +122,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($related, $model->belongsTo('JobPart', 'job:jobPart'));
     }
 
-    public function testHasManyMethod()
+    public function testHasMany()
     {
         $client = Mockery::mock(Client::class);
         $model = new Model($client, 'Job');
@@ -137,7 +136,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(KeyCollection::class, $builder->get());
     }
 
-    public function testHasManyMethodWithCompoundKey()
+    public function testHasManyWithCompoundKey()
     {
         $client = Mockery::mock(Client::class);
         $model = new Model($client, 'JobPart');
@@ -154,7 +153,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(KeyCollection::class, $builder->get());
     }
 
-    public function testMorphManyMethod()
+    public function testMorphMany()
     {
         $client = Mockery::mock(Client::class);
         $model = new Model($client, 'Job');
@@ -171,7 +170,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(KeyCollection::class, $builder->get());
     }
 
-    public function testIsDirtyMethod()
+    public function testIsDirty()
     {
         $client = Mockery::mock(Client::class);
         $model = new Model($client, 'CSR', ['name' => 'John Smith']);
@@ -180,7 +179,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($model->isDirty());
     }
 
-    public function testJoinKeysMethod()
+    public function testJoinKeys()
     {
         $client = Mockery::mock(Client::class);
         $model = new Model($client, 'CSR');
@@ -244,7 +243,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertFalse($model->isDirty());
     }
 
-    public function testCreateMethod()
+    public function testCreate()
     {
         $client = Mockery::mock(Client::class);
         $attributes = [
@@ -261,7 +260,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(Model::class, $model->create($attributes));
     }
 
-    public function testSplitKeyMethod()
+    public function testSplitKey()
     {
         $client = Mockery::mock(Client::class);
         $model = new Model($client, 'JobPart', ['primaryKey' => '12345:01']);
@@ -269,7 +268,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(['job', 'jobPart'], $model->splitKey('job:jobPart'));
     }
 
-    public function testGetDirtyMethod()
+    public function testGetDirty()
     {
         $client = Mockery::mock(Client::class);
         $model = new Model($client, 'CSR', ['name' => 'John Smith', 'email' => 'jsmith@printcompany.com']);
@@ -277,7 +276,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(['email' => 'john.smith@printcompany.com'], $model->getDirty());
     }
 
-    public function testDuplicateMethod()
+    public function testDuplicate()
     {
         $client = Mockery::mock(Client::class);
         $attributes = [
@@ -306,7 +305,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertNull($model->duplicate());
     }
 
-    public function testDuplicateMethodWithNewKey()
+    public function testDuplicateWithNewKey()
     {
         $client = Mockery::mock(Client::class);
         $attributes = [
@@ -353,7 +352,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($builder, $model->jobParts());
     }
 
-    public function testCallBuilderMethod()
+    public function testCallBuilder()
     {
         $client = Mockery::mock(Client::class);
         $model = new Model($client, 'Job');
@@ -361,7 +360,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(Builder::class, $builder);
     }
 
-    public function testGetTypeMethod()
+    public function testGetType()
     {
         $client = Mockery::mock(Client::class);
         $model = new Model($client, 'GLAccount');
@@ -376,7 +375,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(json_encode($attributes), $model);
     }
 
-    public function testDeleteMethod()
+    public function testDelete()
     {
         $client = Mockery::mock(Client::class);
         $client->shouldReceive('deleteObject')->with('CSR', 3)->once()->andReturnNull();
@@ -388,7 +387,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertNull($model->delete());
     }
 
-    public function testFreshMethod()
+    public function testFresh()
     {
         $client = Mockery::mock(Client::class);
         $client->shouldReceive('readObject')
@@ -406,7 +405,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertNull($model->fresh());
     }
 
-    public function testFindMethod()
+    public function testFind()
     {
         $client = Mockery::mock(Client::class);
         $model = new Model($client, 'CSR');

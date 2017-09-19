@@ -10,7 +10,7 @@ class KeyCollectionTest extends PHPUnit_Framework_TestCase
         Mockery::close();
     }
 
-    public function testAllMethod()
+    public function testAll()
     {
         $model = Mockery::mock(Model::class);
         $collection = new KeyCollection($model, [1, 2, 3]);
@@ -39,7 +39,7 @@ class KeyCollectionTest extends PHPUnit_Framework_TestCase
         $this->assertContainsOnlyInstancesOf(Model::class, $collection);
     }
 
-    public function testDiffMethod()
+    public function testDiff()
     {
         $model = Mockery::mock(Model::class);
         $collection = new KeyCollection($model, [1, 2, 3]);
@@ -50,7 +50,7 @@ class KeyCollectionTest extends PHPUnit_Framework_TestCase
         $this->assertArrayNotHasKey(3, $diff);
     }
 
-    public function testFirstMethod()
+    public function testFirst()
     {
         $model = Mockery::mock(Model::class);
         $collection = new KeyCollection($model, [4, 5, 6]);
@@ -58,7 +58,7 @@ class KeyCollectionTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(Model::class, $collection->first());
     }
 
-    public function testLastMethod()
+    public function testLast()
     {
         $model = Mockery::mock(Model::class);
         $collection = new KeyCollection($model, [4, 5, 6]);
@@ -69,14 +69,14 @@ class KeyCollectionTest extends PHPUnit_Framework_TestCase
     /**
      * @expectedException \OutOfBoundsException
      */
-    public function testGetMethodThrowsOutOfBoundsException()
+    public function testGetThrowsOutOfBoundsException()
     {
         $model = Mockery::mock(Model::class);
         $collection = new KeyCollection($model, [1]);
         $collection->get(2);
     }
 
-    public function testHasMethod()
+    public function testHas()
     {
         $model = Mockery::mock(Model::class);
         $collection = new KeyCollection($model, [4, 5, '6A']);
@@ -86,7 +86,7 @@ class KeyCollectionTest extends PHPUnit_Framework_TestCase
         $this->assertFalse($collection->has(6));
     }
 
-    public function testIsEmptyMethod()
+    public function testIsEmpty()
     {
         $model = Mockery::mock(Model::class);
         $collection = new KeyCollection($model, []);
@@ -136,7 +136,7 @@ class KeyCollectionTest extends PHPUnit_Framework_TestCase
         unset($collection[1]);
     }
 
-    public function testPaginateMethod()
+    public function testPaginate()
     {
         $model = Mockery::mock(Model::class);
         $collection = new KeyCollection($model, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
@@ -163,7 +163,7 @@ class KeyCollectionTest extends PHPUnit_Framework_TestCase
         $this->assertNull($collection->current());
     }
 
-    public function testPluckMethod()
+    public function testPluck()
     {
         $model = Mockery::mock(Model::class);
         $collection = new KeyCollection($model, [1, 2]);
@@ -176,7 +176,7 @@ class KeyCollectionTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('Test 2', $list[1]);
     }
 
-    public function testPluckMethodWithKey()
+    public function testPluckWithKey()
     {
         $model = Mockery::mock(Model::class);
         $collection = new KeyCollection($model, [1, 2]);

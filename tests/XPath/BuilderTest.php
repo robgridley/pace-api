@@ -88,7 +88,7 @@ class BuilderTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    public function testFindMethod()
+    public function testFind()
     {
         $model = Mockery::mock(Model::class);
         $collection = Mockery::mock(KeyCollection::class);
@@ -104,7 +104,7 @@ class BuilderTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(KeyCollection::class, $builder->find());
     }
 
-    public function testFirstOrNewMethodModelNotFound()
+    public function testFirstOrNewModelNotFound()
     {
         $model = Mockery::mock(Model::class);
         $collection = Mockery::mock(KeyCollection::class);
@@ -114,7 +114,7 @@ class BuilderTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(Model::class, (new Builder($model))->firstOrNew());
     }
 
-    public function testFirstOrNewMethodModelFound()
+    public function testFirstOrNewModelFound()
     {
         $model = Mockery::mock(Model::class);
         $collection = Mockery::mock(KeyCollection::class);
@@ -123,7 +123,7 @@ class BuilderTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(Model::class, (new Builder($model))->firstOrNew());
     }
 
-    public function testFirstOrFailMethod()
+    public function testFirstOrFail()
     {
         $model = Mockery::mock(Model::class);
         $collection = Mockery::mock(KeyCollection::class);
@@ -135,7 +135,7 @@ class BuilderTest extends PHPUnit_Framework_TestCase
     /**
      * @expectedException \Pace\ModelNotFoundException
      */
-    public function testFirstOrFailMethodThrowsModelNotFoundException()
+    public function testFirstOrFailThrowsModelNotFoundException()
     {
         $model = Mockery::mock(Model::class);
         $collection = Mockery::mock(KeyCollection::class);

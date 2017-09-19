@@ -33,7 +33,7 @@ class ModelAttachmentsTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('Some random string', $model->getContent());
     }
 
-    public function testAttachFileMethod()
+    public function testAttachFile()
     {
         $client = Mockery::mock(Client::class);
         $service = Mockery::mock(AttachmentService::class);
