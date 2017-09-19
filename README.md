@@ -256,6 +256,49 @@ Both the `Model` and `KeyCollection` classes implemement the `JsonSerializable` 
 echo $pace->customer->read('HOUSE');
 ```
 
+## Attachments
+
+### Attaching files
+
+To attach a file to a model, you only need to specify its name and content. The library takes care of guessing the MIME type and encoding the content.
+
+```php
+$job = $pace->model('Job')->read('12345');
+$attachment = $job->attachFile('test.txt', file_get_contents('test.txt'));
+$attachment->description = 'A test file';
+$attachment->save();
+```
+
+The `attachFile()` method returns a FileAttachment model so you can set the category, description, etc. Only call the `save()` method if you change any attributes.
+
+You can also attach a file to a field by specifying the name of the field. This is used throughout Pace for logos, photos, layouts, etc.
+
+```php
+$company = $pace->model('Company')->read('001');
+$company->attachFile('logo.png', file_get_contents('logo.png'), 'logo');
+```
+
+### Retrieving attached files
+
+Files attached to a model are retrieved via a special relationship method. It behaves the same as a "has many" relationship and returns an `XPath\Builder` instance.
+
+```php
+$attachments = $job->fileAttachments()->get();
+```
+
+Use a `filter()` to limit the results to one field or one type of file.
+
+```php
+$logo = $company->fileAttachments()->filter('@field', 'logo')->first();
+$spreadsheets = $job->fileAttachments()->filter('@ext', 'xls')->get();
+```
+
+Finally, call `getContent()` on a FileAttachment model to read the content of the file. The library automatically decodes the content for you.
+
+```php
+$attachment->getContent();
+```
+
 ## Version
 
 Identify the version of Pace running on the server.
