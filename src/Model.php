@@ -61,7 +61,7 @@ class Model implements ArrayAccess, JsonSerializable
      */
     public function __construct(Client $client, $type, $properties = [])
     {
-        if (!preg_match('/^([A-Z]+[a-z]*)+$/', $type)) {
+        if (!preg_match('/^([A-Z]+[a-z0-9]*)+$/', $type)) {
             throw new InvalidArgumentException('Type must be CapitalizedWords.');
         }
 
