@@ -53,6 +53,16 @@ class Client
     }
 
     /**
+     * Prepare the instance for serialization.
+     *
+     * @return string[]
+     */
+    public function __sleep()
+    {
+        return ['soapFactory', 'url'];
+    }
+
+    /**
      * Dynamically retrieve the specified model.
      *
      * @param string $name
