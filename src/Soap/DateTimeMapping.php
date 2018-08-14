@@ -4,6 +4,7 @@ namespace Pace\Soap;
 
 use Carbon\Carbon;
 use SimpleXMLElement;
+use InvalidArgumentException;
 use Pace\Contracts\Soap\TypeMapping;
 
 class DateTimeMapping implements TypeMapping
@@ -55,6 +56,10 @@ class DateTimeMapping implements TypeMapping
      */
     public function toXml($php)
     {
+        if (!$php instanceof Carbon) {
+            throw new InvalidArgumentException('PHP value must be a Carbon instance');
+        }
+
         return sprintf(
             '<%1$s>%2$s</%1$s>',
             $this->getTypeName(),
