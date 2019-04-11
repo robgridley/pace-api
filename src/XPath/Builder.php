@@ -166,6 +166,35 @@ class Builder
     }
 
     /**
+     * Add an "in" filter.
+     *
+     * @param string $xpath
+     * @param array $values
+     * @param string $boolean
+     * @return self
+     */
+    public function in($xpath, array $values, $boolean = 'and')
+    {
+        return $this->filter(function ($builder) use ($xpath, $values) {
+            foreach ($values as $value) {
+                $builder->filter($xpath, '=', $value, 'or');
+            }
+        }, null, null, $boolean);
+    }
+
+    /**
+     * Add an "or in" filter.
+     *
+     * @param string $xpath
+     * @param array $values
+     * @return self
+     */
+    public function orIn($xpath, array $values)
+    {
+        return $this->in($xpath, $values, 'or');
+    }
+
+    /**
      * Add a nested filter using a callback.
      *
      * @param Closure $callback
