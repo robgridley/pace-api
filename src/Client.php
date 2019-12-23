@@ -2,6 +2,7 @@
 
 namespace Pace;
 
+use Closure;
 use InvalidArgumentException;
 use Pace\Soap\DateTimeMapping;
 use Pace\Contracts\Soap\Factory as SoapFactory;
@@ -170,6 +171,42 @@ class Client
     public function service($name)
     {
         return $this->services[$name] ?? $this->services[$name] = $this->makeService($name);
+    }
+
+    /**
+     * Wrap the specified closure in a transaction.
+     *
+     * @param Closure $callback
+     */
+    public function transaction(Closure $callback)
+    {
+        $this->service('TransactionService')->transaction($callback);
+    }
+
+    /**
+     * Start a transaction.
+     *
+     * @param int $timeout
+     */
+    public function startTransaction(int $timeout = 60)
+    {
+        $this->service('TransactionService')->startTransaction($timeout);
+    }
+
+    /**
+     * Rollback the transaction.
+     */
+    public function rollbackTransaction()
+    {
+        $this->service('TransactionService')->rollback();
+    }
+
+    /**
+     * Commit the transaction.
+     */
+    public function commitTransaction()
+    {
+        $this->service('TransactionService')->commit();
     }
 
     /**

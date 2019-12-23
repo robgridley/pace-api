@@ -2,7 +2,6 @@
 
 namespace Pace\Soap;
 
-use SoapClient;
 use Pace\Contracts\Soap\TypeMapping;
 use Pace\Contracts\Soap\Factory as FactoryContract;
 
