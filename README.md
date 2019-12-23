@@ -247,6 +247,57 @@ $line = $pace->inventoryLine;
 $line->inventoryBatch = $batch;
 ```
 
+## Transactions
+
+You can wrap your operations in a database transaction so that all calls may be rolled back in the event of an error. Using transactions has the added benefit of delaying any event handlers until all of your API calls are complete.
+
+Note: The transaction service was introduced in Pace 29.0-1704.
+
+### Using a closure
+
+Use the `transaction()` method to execute your operations in a database transaction. Pace will rollback the transaction in the event of a server-side error, and the API client will automatically rollback the transaction if a PHP exception is thrown. If the closure executes successfully, and there are no server-side errors, the transaction will be committed.
+
+```php
+$pace->transaction(function () use ($pace) {
+    $job = $pace->model('Job');
+    $job->customer = 'HOUSE';
+    $job->description = 'Test Order';
+    $job->jobType = 10;
+    $job->adminStatus = 'O';
+    $job->save();
+
+    $jobPart = $job->jobParts()->first();
+
+    $jobMaterial = $pace->model('JobMaterial');
+    $jobMaterial->job = $jobPart->job;
+    $jobMaterial->jobPart = $jobPart->jobPart;
+    $jobMaterial->inventoryItem = 'ABC123';
+    $jobMaterial->plannedQuantity = 100;
+    $jobMaterial->save();
+
+    throw new Exception('Just kidding. Roll it back.');
+});
+```
+
+### Using transactions manually
+
+Alternatively, you may call the `startTransaction()`, `rollbackTransaction()` and `commitTransaction()` methods manually.
+
+```php
+$pace->startTransaction();
+
+$csr = $pace->model('CSR');
+$csr->name = 'Definitely Not Evil';
+$csr->save();
+
+if ($csr->id == 666) {
+   // Oh no. They are evil!
+   $pace->rollbackTransaction();
+} else {
+   $pace->commitTransaction();
+}
+```
+
 ## JSON
 
 Both the `Model` and `KeyCollection` classes implemement the `JsonSerializable` interface and casting either class to a string will generate JSON.
