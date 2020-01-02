@@ -5,6 +5,7 @@ namespace Pace;
 use Closure;
 use InvalidArgumentException;
 use Pace\Soap\DateTimeMapping;
+use Pace\Report\Builder as ReportBuilder;
 use Pace\Contracts\Soap\Factory as SoapFactory;
 
 class Client
@@ -160,6 +161,21 @@ class Client
     public function readObject($object, $key)
     {
         return $this->service('ReadObject')->read($object, $key);
+    }
+
+    /**
+     * Run a report.
+     *
+     * @param Model|int $report
+     * @return ReportBuilder
+     */
+    public function report($report): ReportBuilder
+    {
+        if (!$report instanceof Model) {
+            $report = $this->model('Report')->readOrFail($report);
+        }
+
+        return new ReportBuilder($this->service('ReportService'), $report);
     }
 
     /**
