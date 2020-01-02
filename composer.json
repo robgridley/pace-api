@@ -12,7 +12,7 @@
         "php": ">=7.1.0",
         "ext-fileinfo": "*",
         "ext-soap": "*",
-        "nesbot/carbon": "^2.0",
+        "nesbot/carbon": "^1.20 || ^2.0",
         "doctrine/inflector": "~1.0"
     },
     "require-dev": {
