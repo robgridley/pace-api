@@ -249,7 +249,7 @@ $line->inventoryBatch = $batch;
 
 ## Transactions
 
-You can wrap your operations in a database transaction so that all calls may be rolled back in the event of an error. Using transactions has the added benefit of delaying any event handlers until all of your API calls are complete.
+You can wrap your operations in a database transaction so that all calls may be rolled back in the event of an error. Using transactions has the added benefit of deferring any event handlers until all of your API calls are complete.
 
 Note: The transaction service was introduced in Pace 29.0-1704.
 
@@ -281,7 +281,7 @@ $pace->transaction(function () use ($pace) {
 
 ### Using transactions manually
 
-Alternatively, you may call the `startTransaction()`, `rollbackTransaction()` and `commitTransaction()` methods manually.
+Alternatively, you can call the `startTransaction()`, `rollbackTransaction()` and `commitTransaction()` methods manually.
 
 ```php
 $pace->startTransaction();
@@ -300,7 +300,7 @@ if ($csr->id == 666) {
 
 ## JSON
 
-Both the `Model` and `KeyCollection` classes implemement the `JsonSerializable` interface and casting either class to a string will generate JSON.
+Both the `Model` and `KeyCollection` classes implement the `JsonSerializable` interface and casting either class to a string will generate JSON.
 
 ```php
 // print a JSON representation of the House account
@@ -348,6 +348,65 @@ Finally, call `getContent()` on a FileAttachment model to read the content of th
 
 ```php
 $attachment->getContent();
+```
+
+## Reports
+
+Fluently run reports using the report builder.
+
+### Passing parameters
+
+Pass parameters to the report using the ``parameter()`` or ``namedParameter()`` methods. The ``parameter()`` method accepts two arguments: the report parameter ID and the value.
+
+```php
+$pace->report(1000)
+   ->parameter(10001, '2019-12-01')
+   ->parameter(10002, '2019-12-31')
+   ->parameter(10003, 'D');
+```
+
+The ``namedParameter()`` method looks up the report parameter ID by its name.
+
+```php
+$pace->report(1000)
+   ->namedParameter('Start Date', '2019-12-01')
+   ->namedParameter('End Date', '2019-12-31')
+   ->namedParameter('Report Format', 'D');
+```
+
+### Reports requiring a base object
+
+Some reports require a base object. Use the ``baseObjectKey()`` method to pass a model or primary key.
+
+```php
+$job = $pace->model('Job')->read('90000');
+
+$pace->report(100)
+    ->baseObjectKey($job)
+    ->namedParameter('Include Kit Detail', 'N');
+```
+
+### Getting the report
+
+The report builder ``get()`` method returns a ``Report\File`` instance, which has two public methods: ``getContent()`` returns the report file content and ``getMediaType()`` returns the media (MIME) type of the file. 
+
+```php
+$file = $pace->report(200)->get();
+
+if ($file->getMediaType() == 'application/vnd.ms-excel') {
+    file_put_contents('report.xls', $file->getContent());
+}
+```
+
+### Printing the report
+
+Use the ``print()`` method to print the report to the default printer. If the report does not have a default printer configured, the Pace API will throw a SOAP error.
+
+```php
+$pace->report(100)
+    ->baseObjectKey('90000')
+    ->namedParameter('Include Kit Detail', 'N')
+    ->print();
 ```
 
 ## Version
