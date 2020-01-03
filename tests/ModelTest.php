@@ -124,6 +124,7 @@ class ModelTest extends TestCase
         $model = new Model($client, 'Job');
         $model->job = '12345';
         $related = Mockery::mock(Model::class);
+        $related->shouldReceive('newBuilder')->passthru();
         $client->shouldReceive('model')->with('JobPart')->once()->andReturn($related);
         $builder = $model->hasMany('JobPart', 'job');
         $this->assertInstanceOf(Builder::class, $builder);
@@ -138,6 +139,7 @@ class ModelTest extends TestCase
         $model = new Model($client, 'JobPart');
         $model->primaryKey = '12345:01';
         $related = Mockery::mock(Model::class);
+        $related->shouldReceive('newBuilder')->passthru();
         $client->shouldReceive('model')->with('JobMaterial')->once()->andReturn($related);
         $builder = $model->hasMany('JobMaterial', 'job:jobPart');
         $this->assertInstanceOf(Builder::class, $builder);
@@ -155,6 +157,7 @@ class ModelTest extends TestCase
         $model = new Model($client, 'Job');
         $model->job = '12345';
         $related = Mockery::mock(Model::class);
+        $related->shouldReceive('newBuilder')->passthru();
         $client->shouldReceive('model')->with('FileAttachment')->once()->andReturn($related);
         $builder = $model->morphMany('FileAttachment');
         $this->assertInstanceOf(Builder::class, $builder);

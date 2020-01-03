@@ -657,7 +657,7 @@ class Model implements ArrayAccess, JsonSerializable
      *
      * @return Builder
      */
-    protected function newBuilder()
+    public function newBuilder()
     {
         return new Builder($this);
     }
