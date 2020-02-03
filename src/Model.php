@@ -6,7 +6,6 @@ use ArrayAccess;
 use JsonSerializable;
 use Pace\XPath\Builder;
 use Pace\Model\Attachments;
-use InvalidArgumentException;
 use UnexpectedValueException;
 
 class Model implements ArrayAccess, JsonSerializable
@@ -62,12 +61,8 @@ class Model implements ArrayAccess, JsonSerializable
      * @param string $type
      * @param array $attributes
      */
-    public function __construct(Client $client, $type, array $attributes = [])
+    public function __construct(Client $client, string $type, array $attributes = [])
     {
-        if (!preg_match('/^([A-Z]+[a-z]*)+$/', $type)) {
-            throw new InvalidArgumentException('Type must be CapitalizedWords');
-        }
-
         $this->client = $client;
         $this->type = $type;
         $this->attributes = $attributes;
