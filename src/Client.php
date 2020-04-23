@@ -179,6 +179,18 @@ class Client
     }
 
     /**
+     * Invoke an action.
+     *
+     * @param string action
+     * @param object|array $object
+     * @return \stdClass
+     */
+    public function invokeAction($action, $object)
+    {
+        return $this->service('InvokeAction')->invokeAction($action, $object);
+    }
+
+    /**
      * Get an instance of the specified service.
      *
      * @param string $name
