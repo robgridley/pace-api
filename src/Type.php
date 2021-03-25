@@ -7,7 +7,7 @@ use Doctrine\Common\Inflector\Inflector;
 class Type
 {
     /**
-     * Object type names with adjacent uppercase letters.
+     * Object types with adjacent uppercase letters.
      *
      * @var array
      */
@@ -50,7 +50,16 @@ class Type
         'uomRange' => 'UOMRange',
         'uomSetup' => 'UOMSetup',
         'uomType' => 'UOMType',
-        'wipCategory' => 'WIPCategory'
+        'wipCategory' => 'WIPCategory',
+    ];
+
+    /**
+     * Object types with irregular primary keys.
+     *
+     * @var array
+     */
+    protected static $irregularKeys = [
+        'FileAttachment' => 'attachment',
     ];
 
     /**
@@ -84,5 +93,20 @@ class Type
     public static function singularize($name)
     {
         return Inflector::singularize($name);
+    }
+
+    /**
+     * Get the primary key for the specified type.
+     *
+     * @param string $type
+     * @return string|null
+     */
+    public static function keyName($type)
+    {
+        if (array_key_exists($type, static::$irregularKeys)) {
+            return static::$irregularKeys[$type];
+        }
+
+        return null;
     }
 }

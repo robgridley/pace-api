@@ -5,11 +5,10 @@ namespace Pace\XPath;
 use Closure;
 use DateTime;
 use Pace\Model;
-use IteratorAggregate;
 use InvalidArgumentException;
 use Pace\ModelNotFoundException;
 
-class Builder implements IteratorAggregate
+class Builder
 {
     /**
      * Valid operators.
@@ -167,13 +166,32 @@ class Builder implements IteratorAggregate
     }
 
     /**
-     * Get an iterator by calling find().
+     * Add an "in" filter.
      *
-     * @return \Pace\KeyCollection
+     * @param string $xpath
+     * @param array $values
+     * @param string $boolean
+     * @return self
      */
-    public function getIterator()
+    public function in($xpath, array $values, $boolean = 'and')
     {
-        return $this->find();
+        return $this->filter(function ($builder) use ($xpath, $values) {
+            foreach ($values as $value) {
+                $builder->filter($xpath, '=', $value, 'or');
+            }
+        }, null, null, $boolean);
+    }
+
+    /**
+     * Add an "or in" filter.
+     *
+     * @param string $xpath
+     * @param array $values
+     * @return self
+     */
+    public function orIn($xpath, array $values)
+    {
+        return $this->in($xpath, $values, 'or');
     }
 
     /**
@@ -186,7 +204,8 @@ class Builder implements IteratorAggregate
     public function nestedFilter(Closure $callback, $boolean = 'and')
     {
         $builder = new static;
-        call_user_func($callback, $builder);
+
+        $callback($builder);
 
         $this->filters[] = compact('builder', 'boolean');
 

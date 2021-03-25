@@ -2,73 +2,63 @@
 
 namespace Pace\Soap;
 
-use SoapClient as BaseSoapClient;
+use SoapClient as PhpSoapClient;
 
-class SoapClient extends BaseSoapClient
+class SoapClient extends PhpSoapClient
 {
     /**
-     * Cached types.
+     * The middleware.
      *
      * @var array
      */
-    protected $types = [];
+    protected static $middleware = [];
 
     /**
-     * Get a multidimensional array of types.
+     * Add the specified middleware.
      *
      * @param string $name
-     * @return array
+     * @param callable $callable
      */
-    public function getTypes($name = null)
+    public static function addMiddleware(string $name, callable $callable)
     {
-        if (empty($this->types)) {
-            $structures = $this->__getTypes();
-
-            foreach ($structures as $structure) {
-                $type = $this->parseComplexType($structure);
-
-                if ($type == null) {
-                    continue;
-                }
-
-                $this->types[$type] = $this->parsePropertyTypes($structure);
-            }
-        }
-
-        return $name == null ? $this->types : $this->types[$name];
+        static::$middleware[$name] = $callable;
     }
 
     /**
-     * Get the complex type from a structure.
+     * Remove the specified middleware.
      *
-     * @param string $structure
-     * @return string|null
+     * @param string $name
      */
-    protected function parseComplexType($structure)
+    public static function removeMiddleware(string $name)
     {
-        if (preg_match('/struct (\w+) {/', $structure, $matches)) {
-            return $matches[1];
-        }
+        unset(static::$middleware[$name]);
     }
 
     /**
-     * Get the property types from a structure.
+     * Apply middleware before calling the specified SOAP function.
      *
-     * @param string $structure
-     * @return array
+     * @param string $function
+     * @param array $arguments
+     * @return mixed
      */
-    protected function parsePropertyTypes($structure)
+    public function __call($function, $arguments)
     {
-        $rows = explode("\n", $structure);
+        $this->applyMiddleware();
 
-        $properties = [];
+        return parent::__call($function, $arguments);
+    }
 
-        foreach (array_slice($rows, 1) as $row) {
-            if (preg_match('/ (\w+) (\w+);/', $row, $matches)) {
-                $properties[$matches[2]] = $matches[1];
-            }
+    /**
+     * Apply the middleware.
+     */
+    protected function applyMiddleware()
+    {
+        $headers = [];
+
+        foreach(static::$middleware as $middleware) {
+            $headers = $middleware($headers);
         }
 
-        return $properties;
+        $this->__setSoapHeaders($headers);
     }
 }

@@ -2,40 +2,20 @@
 
 namespace Pace;
 
-use SoapFault;
+use Closure;
+use InvalidArgumentException;
+use Pace\Soap\DateTimeMapping;
 use Pace\Contracts\Soap\Factory as SoapFactory;
 
 class Client
 {
-    /**
-     * The object context services.
-     */
-    const CREATE_SERVICE = 'CreateObject';
-    const DELETE_SERVICE = 'DeleteObject';
-    const CLONE_SERVICE = 'CloneObject';
-    const FIND_SERVICE = 'FindObjects';
-    const READ_SERVICE = 'ReadObject';
-    const UPDATE_SERVICE = 'UpdateObject';
-
-    /**
-     * The system services.
-     */
-    const ATTACHMENT_SERVICE = 'AttachmentService';
-    const FIND_COMPANY_SERVICE = 'FindCompany';
-    const GEOLOCATE_SERVICE = 'GeoLocate';
-    const INSPECT_SERVICE = 'SystemInspector';
-    const INVOKE_ACTION_SERVICE = 'InvokeAction';
-    const INVOKE_CONNECT_SERVICE = 'InvokePaceConnect';
-    const INVOKE_PROCESS_SERVICE = 'InvokeProcess';
-    const VERSION_SERVICE = 'Version';
-
     /**
      * The primary key field.
      */
     const PRIMARY_KEY = 'primaryKey';
 
     /**
-     * Cached services (SOAP clients).
+     * Previously loaded services.
      *
      * @var array
      */
@@ -67,9 +47,20 @@ class Client
     public function __construct(SoapFactory $soapFactory, $host, $login, $password, $scheme = 'https')
     {
         $soapFactory->setOptions(compact('login', 'password'));
+        $soapFactory->addTypeMapping(new DateTimeMapping);
         $this->soapFactory = $soapFactory;
 
         $this->url = sprintf('%s://%s/rpc/services/', $scheme, $host);
+    }
+
+    /**
+     * Prepare the instance for serialization.
+     *
+     * @return string[]
+     */
+    public function __sleep()
+    {
+        return ['soapFactory', 'url'];
     }
 
     /**
@@ -84,86 +75,68 @@ class Client
     }
 
     /**
+     * Get an instance of the attachment service.
+     *
+     * @return \Pace\Services\AttachmentService
+     */
+    public function attachment()
+    {
+        return $this->service('AttachmentService');
+    }
+
+    /**
      * Clone an object.
      *
-     * @param string $type
-     * @param object|array $object
-     * @param object|array $newObject
-     * @param string|int $newPrimaryKey
-     * @param object|array $newParent
-     * @return \stdClass
+     * @param string $object
+     * @param array $attributes
+     * @param array $newAttributes
+     * @param int|string|null $newKey
+     * @param array|null $newParent
+     * @return array
      */
-    public function cloneObject($type, $object, $newObject, $newPrimaryKey = null, $newParent = null)
+    public function cloneObject($object, array $attributes, array $newAttributes, $newKey = null, array $newParent = null)
     {
-        $method = 'clone' . $type;
-
-        return $this->soapClient(Client::CLONE_SERVICE)->$method([
-            $type => $object,
-            $type . 'AttributesToOverride' => $newObject,
-            'newPrimaryKey' => $newPrimaryKey,
-            'newParent' => $newParent
-        ])->out;
+        return $this->service('CloneObject')->clone($object, $attributes, $newAttributes, $newKey, $newParent);
     }
 
     /**
      * Create an object.
      *
-     * @param string $type
-     * @param object|array $object
-     * @return \stdClass
+     * @param string $object
+     * @param array $attributes
+     * @return array
      */
-    public function createObject($type, $object)
+    public function createObject($object, array $attributes)
     {
-        $method = 'create' . $type;
-
-        return $this->soapClient(Client::CREATE_SERVICE)
-            ->$method([lcfirst($type) => $object])
-            ->out;
+        return $this->service('CreateObject')->create($object, $attributes);
     }
 
     /**
      * Delete an object by its primary key.
      *
-     * @param string $type
+     * @param string $object
      * @param int|string $key
      */
-    public function deleteObject($type, $key)
+    public function deleteObject($object, $key)
     {
-        return $this->soapClient(Client::DELETE_SERVICE)
-            ->deleteObject(['in0' => $type, 'in1' => $key]);
+        $this->service('DeleteObject')->delete($object, $key);
     }
 
     /**
-     * Find primary keys for the specified object using a filter (and optionally sort).
+     * Find objects.
      *
-     * @param string $type
+     * @param string $object
      * @param string $filter
-     * @param array $sort
-     * @return mixed
+     * @param array|null $sort
+     * @return array
      */
-    public function findObjects($type, $filter, array $sort = null)
+    public function findObjects($object, $filter, array $sort = null)
     {
-        if (!empty($sort)) {
-            $response = $this->soapClient(Client::FIND_SERVICE)
-                ->findAndSort(['in0' => $type, 'in1' => $filter, 'in2' => $sort])
-                ->out;
-        } else {
-            $response = $this->soapClient(Client::FIND_SERVICE)
-                ->find(['in0' => $type, 'in1' => $filter])
-                ->out;
+        if (is_null($sort)) {
+            return $this->service('FindObjects')->find($object, $filter);
         }
 
-        return isset($response->string) ? $response->string : null;
-    }
-
-    /**
-     * Perform a getVersion call.
-     *
-     * @return string
-     */
-    public function getVersion()
-    {
-        return $this->soapClient(self::VERSION_SERVICE)->getVersion()->out;
+        return $this->service('FindObjects')->findAndSort($object, $filter, $sort);
     }
 
     /**
@@ -178,71 +151,84 @@ class Client
     }
 
     /**
-     * Read the specified object type by its primary key.
+     * Read an object by its primary key.
      *
-     * @param string $type
-     * @param mixed $key
-     * @return \stdClass|null
-     * @throws SoapFault if an unexpected SOAP error occurs.
+     * @param string $object
+     * @param int|string $key
+     * @return array|null
      */
-    public function readObject($type, $key)
+    public function readObject($object, $key)
     {
-        $method = 'read' . $type;
-
-        try {
-            return $this->soapClient(Client::READ_SERVICE)
-                ->$method([lcfirst($type) => [self::PRIMARY_KEY => $key]])
-                ->out;
-        } catch (SoapFault $e) {
-            if (strpos($e->getMessage(), 'Unable to locate object') !== 0) {
-                throw $e;
-            }
-        }
+        return $this->service('ReadObject')->read($object, $key);
     }
 
     /**
-     * Get a SOAP client for the specified service.
+     * Get an instance of the specified service.
      *
-     * @param $service
-     * @return \SoapClient
+     * @param string $name
+     * @return mixed
      */
-    public function soapClient($service)
+    public function service($name)
     {
-        if (!isset($this->services[$service])) {
-            $this->services[$service] = $this->soapFactory->make($this->getServiceWsdl($service));
-        }
+        return $this->services[$name] ?? $this->services[$name] = $this->makeService($name);
+    }
 
-        return $this->services[$service];
+    /**
+     * Wrap the specified closure in a transaction.
+     *
+     * @param Closure $callback
+     */
+    public function transaction(Closure $callback)
+    {
+        $this->service('TransactionService')->transaction($callback);
+    }
+
+    /**
+     * Start a transaction.
+     *
+     * @param int $timeout
+     */
+    public function startTransaction(int $timeout = 60)
+    {
+        $this->service('TransactionService')->startTransaction($timeout);
+    }
+
+    /**
+     * Rollback the transaction.
+     */
+    public function rollbackTransaction()
+    {
+        $this->service('TransactionService')->rollback();
+    }
+
+    /**
+     * Commit the transaction.
+     */
+    public function commitTransaction()
+    {
+        $this->service('TransactionService')->commit();
     }
 
     /**
      * Update an object.
      *
-     * @param string $type
-     * @param \stdClass|array $object
-     * @return mixed
+     * @param string $object
+     * @param array $attributes
+     * @return array
      */
-    public function updateObject($type, $object)
+    public function updateObject($object, $attributes)
     {
-        $method = 'update' . $type;
-
-        return $this->soapClient(Client::UPDATE_SERVICE)
-            ->$method([lcfirst($type) => $object])
-            ->out;
+        return $this->service('UpdateObject')->update($object, $attributes);
     }
 
     /**
-     * Check the version of Pace running on the server.
+     * Determine the version of Pace running on the server.
      *
      * @return array
      */
     public function version()
     {
-        $version['string'] = $this->getVersion();
-
-        preg_match('/(\d+)\.(\d+)\-(\d+)/', $version['string'], $matches);
-
-        return $version + array_combine(['major', 'minor', 'patch'], array_map('intval', array_slice($matches, 1)));
+        return $this->service('Version')->get();
     }
 
     /**
@@ -254,5 +240,24 @@ class Client
     protected function getServiceWsdl($service)
     {
         return $this->url . $service . '?wsdl';
+    }
+
+    /**
+     * Create a new instance of the specified service.
+     *
+     * @param string $service
+     * @return mixed
+     */
+    protected function makeService($service)
+    {
+        $class = 'Pace\\Services\\' . $service;
+
+        if (!class_exists($class)) {
+            throw new InvalidArgumentException('Service [$service] is not implemented');
+        }
+
+        $soap = $this->soapFactory->make($this->getServiceWsdl($service));
+
+        return new $class($soap);
     }
 }

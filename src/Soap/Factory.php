@@ -22,14 +22,6 @@ class Factory implements FactoryContract
     protected $types = [];
 
     /**
-     * Create a new factory instance.
-     */
-    public function __construct()
-    {
-        $this->addTypeMapping(new DateTimeMapping());
-    }
-
-    /**
      * Add a new SOAP to PHP type mapping.
      *
      * @param TypeMapping $mapping
@@ -43,7 +35,7 @@ class Factory implements FactoryContract
      * Create a new SoapClient instance.
      *
      * @param string $wsdl
-     * @return \SoapClient
+     * @return SoapClient
      */
     public function make($wsdl)
     {
