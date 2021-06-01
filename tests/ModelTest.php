@@ -4,20 +4,20 @@ use Pace\Model;
 use Pace\Client;
 use Pace\KeyCollection;
 use Pace\XPath\Builder;
+use PHPUnit\Framework\TestCase;
+use Pace\ModelNotFoundException;
 
-class ModelTest extends PHPUnit_Framework_TestCase
+class ModelTest extends TestCase
 {
-    public function tearDown()
+    public function tearDown(): void
     {
         Mockery::close();
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testCannotBeConstructedWithCamelCase()
     {
         $client = Mockery::mock(Client::class);
+        $this->expectException(InvalidArgumentException::class);
         new Model($client, 'salesPerson');
     }
 
@@ -48,14 +48,12 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($model->key('foo'), 999);
     }
 
-    /**
-     * @expectedException UnexpectedValueException
-     */
     public function testExceptionIsThrownForEmptyKey()
     {
         $client = Mockery::mock(Client::class);
         $model = new Model($client, 'CSR');
         $model->id = 0;
+        $this->expectException(UnexpectedValueException::class);
         $model->key();
     }
 
@@ -88,14 +86,12 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(Model::class, $model->readOrFail(5));
     }
 
-    /**
-     * @expectedException Pace\ModelNotFoundException
-     */
     public function testReadOrFailThrowsModelNotFoundException()
     {
         $client = Mockery::mock(Client::class);
         $client->shouldReceive('readObject')->once()->with('SalesPerson', 5)->andReturn(null);
         $model = new Model($client, 'SalesPerson');
+        $this->expectException(ModelNotFoundException::class);
         $model->readOrFail(5);
     }
 
@@ -128,6 +124,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $model = new Model($client, 'Job');
         $model->job = '12345';
         $related = Mockery::mock(Model::class);
+        $related->shouldReceive('newBuilder')->passthru();
         $client->shouldReceive('model')->with('JobPart')->once()->andReturn($related);
         $builder = $model->hasMany('JobPart', 'job');
         $this->assertInstanceOf(Builder::class, $builder);
@@ -142,6 +139,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $model = new Model($client, 'JobPart');
         $model->primaryKey = '12345:01';
         $related = Mockery::mock(Model::class);
+        $related->shouldReceive('newBuilder')->passthru();
         $client->shouldReceive('model')->with('JobMaterial')->once()->andReturn($related);
         $builder = $model->hasMany('JobMaterial', 'job:jobPart');
         $this->assertInstanceOf(Builder::class, $builder);
@@ -159,6 +157,7 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $model = new Model($client, 'Job');
         $model->job = '12345';
         $related = Mockery::mock(Model::class);
+        $related->shouldReceive('newBuilder')->passthru();
         $client->shouldReceive('model')->with('FileAttachment')->once()->andReturn($related);
         $builder = $model->morphMany('FileAttachment');
         $this->assertInstanceOf(Builder::class, $builder);
@@ -325,7 +324,9 @@ class ModelTest extends PHPUnit_Framework_TestCase
         $model = new Model($client, 'ShipVia', $attributes);
         $model->exists = true;
         $model->description = 'Express';
-        $model->duplicate(5002);
+        $newModel = $model->duplicate(5002);
+        $this->assertInstanceOf(Model::class, $newModel);
+        $this->assertEquals(5002, $newModel->id);
     }
 
     public function testMagicBelongsTo()

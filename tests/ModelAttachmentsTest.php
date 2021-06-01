@@ -2,22 +2,21 @@
 
 use Pace\Model;
 use Pace\Client;
+use PHPUnit\Framework\TestCase;
 use Pace\Services\AttachmentService;
 
-class ModelAttachmentsTest extends PHPUnit_Framework_TestCase
+class ModelAttachmentsTest extends TestCase
 {
-    public function tearDown()
+    public function tearDown(): void
     {
         Mockery::close();
     }
 
-    /**
-     * @expectedException \BadMethodCallException
-     */
     public function testGetContentOnlyAvailableOnFileAttachment()
     {
         $client = Mockery::mock(Client::class);
         $model = new Model($client, 'Job');
+        $this->expectException(BadMethodCallException::class);
         $model->getContent();
     }
 

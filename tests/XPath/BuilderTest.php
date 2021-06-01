@@ -3,19 +3,19 @@
 use Pace\Model;
 use Pace\KeyCollection;
 use Pace\XPath\Builder;
+use PHPUnit\Framework\TestCase;
+use Pace\ModelNotFoundException;
 
-class BuilderTest extends PHPUnit_Framework_TestCase
+class BuilderTest extends TestCase
 {
-    public function tearDown()
+    public function tearDown(): void
     {
         Mockery::close();
     }
 
-    /**
-     * @expectedException InvalidArgumentException
-     */
     public function testExceptionIsThrownForInvalidOperator()
     {
+        $this->expectException(InvalidArgumentException::class);
         (new Builder)->filter('@id', '<>', 99);
     }
 
@@ -146,9 +146,6 @@ class BuilderTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(Model::class, (new Builder($model))->firstOrFail());
     }
 
-    /**
-     * @expectedException \Pace\ModelNotFoundException
-     */
     public function testFirstOrFailThrowsModelNotFoundException()
     {
         $model = Mockery::mock(Model::class);
@@ -156,6 +153,7 @@ class BuilderTest extends PHPUnit_Framework_TestCase
         $model->shouldReceive('find')->once()->andReturn($collection);
         $model->shouldReceive('getType')->once()->andReturn('Job');
         $collection->shouldReceive('first')->once()->andReturnNull();
+        $this->expectException(ModelNotFoundException::class);
         (new Builder($model))->firstOrFail();
     }
 }

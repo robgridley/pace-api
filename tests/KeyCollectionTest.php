@@ -2,10 +2,11 @@
 
 use Pace\Model;
 use Pace\KeyCollection;
+use PHPUnit\Framework\TestCase;
 
-class KeyCollectionTest extends PHPUnit_Framework_TestCase
+class KeyCollectionTest extends TestCase
 {
-    public function tearDown()
+    public function tearDown(): void
     {
         Mockery::close();
     }
@@ -16,7 +17,7 @@ class KeyCollectionTest extends PHPUnit_Framework_TestCase
         $collection = new KeyCollection($model, [1, 2, 3]);
         $model->shouldReceive('read')->times(3)->andReturnSelf();
         $all = $collection->all();
-        $this->assertInternalType('array', $all);
+        $this->assertIsArray($all);
         $this->assertContainsOnlyInstancesOf(Model::class, $all);
     }
 
@@ -66,13 +67,11 @@ class KeyCollectionTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(Model::class, $collection->last());
     }
 
-    /**
-     * @expectedException \OutOfBoundsException
-     */
     public function testGetThrowsOutOfBoundsException()
     {
         $model = Mockery::mock(Model::class);
         $collection = new KeyCollection($model, [1]);
+        $this->expectException(OutOfBoundsException::class);
         $collection->get(2);
     }
 
@@ -102,7 +101,7 @@ class KeyCollectionTest extends PHPUnit_Framework_TestCase
         $model->shouldReceive('read')->with(5)->once()->andReturnSelf();
         $array = $collection->jsonSerialize();
         $this->assertInstanceOf('JsonSerializable', $collection);
-        $this->assertInternalType('array', $array);
+        $this->assertIsArray($array);
         $this->assertContainsOnlyInstancesOf('JsonSerializable', $array);
     }
 
@@ -116,23 +115,19 @@ class KeyCollectionTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(Model::class, $collection[8]);
     }
 
-    /**
-     * @expectedException \RuntimeException
-     */
     public function testImmutableSet()
     {
         $model = Mockery::mock(Model::class);
         $collection = new KeyCollection($model, []);
+        $this->expectException(RuntimeException::class);
         $collection[0] = 1;
     }
 
-    /**
-     * @expectedException \RuntimeException
-     */
     public function testImmutableUnset()
     {
         $model = Mockery::mock(Model::class);
         $collection = new KeyCollection($model, [1]);
+        $this->expectException(RuntimeException::class);
         unset($collection[1]);
     }
 

@@ -1,8 +1,9 @@
 <?php
 
 use Pace\Type;
+use PHPUnit\Framework\TestCase;
 
-class TypeTest extends PHPUnit_Framework_TestCase
+class TypeTest extends TestCase
 {
     public function testCamelize()
     {
