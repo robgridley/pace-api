@@ -4,8 +4,9 @@ namespace Pace;
 
 use ArrayAccess;
 use JsonSerializable;
-use Pace\XPath\Builder;
 use Pace\Model\Attachments;
+use Pace\XPath\Builder;
+use ReflectionMethod;
 use UnexpectedValueException;
 
 class Model implements ArrayAccess, JsonSerializable
@@ -633,7 +634,16 @@ class Model implements ArrayAccess, JsonSerializable
      */
     protected function isBuilderMethod($name)
     {
-        return method_exists(Builder::class, $name) && is_callable([Builder::class, $name]);
+        if (version_compare(PHP_VERSION, '8.0.0', '>=')) {
+            if (method_exists(Builder::class, $name)) {
+                $reflection = new ReflectionMethod(Builder::class, $name);
+                return $reflection->isPublic();
+            } else {
+                return false;
+            }
+        } else {
+            return method_exists(Builder::class, $name) && is_callable([Builder::class, $name]);
+        }
     }
 
     /**

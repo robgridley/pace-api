@@ -2,7 +2,7 @@
 
 namespace Pace;
 
-use Doctrine\Common\Inflector\Inflector;
+use Doctrine\Inflector\InflectorFactory;
 
 class Type
 {
@@ -63,6 +63,13 @@ class Type
     ];
 
     /**
+     * The Doctrine Inflector instance.
+     *
+     * @var \Doctrine\Inflector\Inflector|null
+     */
+    protected static $inflector;
+
+    /**
      * Convert a name to camel case.
      *
      * @param string $name
@@ -92,7 +99,11 @@ class Type
      */
     public static function singularize($name)
     {
-        return Inflector::singularize($name);
+        if (is_null(static::$inflector)) {
+            static::$inflector = InflectorFactory::create()->build();
+        }
+
+        return static::$inflector->singularize($name);
     }
 
     /**
