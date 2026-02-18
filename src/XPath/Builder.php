@@ -4,8 +4,9 @@ namespace Pace\XPath;
 
 use Closure;
 use DateTime;
-use Pace\Model;
 use InvalidArgumentException;
+use Pace\KeyCollection;
+use Pace\Model;
 use Pace\ModelNotFoundException;
 
 class Builder
@@ -15,44 +16,36 @@ class Builder
      *
      * @var array
      */
-    protected $operators = ['=', '!=', '<', '>', '<=', '>='];
+    protected array $operators = ['=', '!=', '<', '>', '<=', '>='];
 
     /**
      * Valid functions.
      *
      * @var array
      */
-    protected $functions = ['contains', 'starts-with'];
+    protected array $functions = ['contains', 'starts-with'];
 
     /**
      * The filters.
      *
      * @var array
      */
-    protected $filters = [];
+    protected array $filters = [];
 
     /**
      * The sorts.
      *
      * @var array
      */
-    protected $sorts = [];
-
-    /**
-     * The Pace model instance to perform the find request on.
-     *
-     * @var Model
-     */
-    protected $model;
+    protected array $sorts = [];
 
     /**
      * Create a new instance.
      *
-     * @param Model $model
+     * @param Model|null $model
      */
-    public function __construct(Model $model = null)
+    public function __construct(protected ?Model $model = null)
     {
-        $this->model = $model;
     }
 
     /**
@@ -61,9 +54,9 @@ class Builder
      * @param string $xpath
      * @param mixed $value
      * @param string $boolean
-     * @return self
+     * @return $this
      */
-    public function contains($xpath, $value = null, $boolean = 'and')
+    public function contains(string $xpath, mixed $value = null, string $boolean = 'and'): static
     {
         return $this->filter($xpath, 'contains', $value, $boolean);
     }
@@ -73,9 +66,9 @@ class Builder
      *
      * @param string $xpath
      * @param mixed $value
-     * @return self
+     * @return $this
      */
-    public function orContains($xpath, $value = null)
+    public function orContains(string $xpath, mixed $value = null): static
     {
         return $this->filter($xpath, 'contains', $value, 'or');
     }
@@ -83,13 +76,13 @@ class Builder
     /**
      * Add a filter.
      *
-     * @param string $xpath
-     * @param string $operator
+     * @param string|Closure $xpath
+     * @param mixed $operator
      * @param mixed $value
      * @param string $boolean
-     * @return self
+     * @return $this
      */
-    public function filter($xpath, $operator = null, $value = null, $boolean = 'and')
+    public function filter(string|Closure $xpath, mixed $operator = null, mixed $value = null, string $boolean = 'and'): static
     {
         if ($xpath instanceof Closure) {
             return $this->nestedFilter($xpath, $boolean);
@@ -111,9 +104,9 @@ class Builder
     /**
      * Perform the find request.
      *
-     * @return \Pace\KeyCollection
+     * @return KeyCollection
      */
-    public function find()
+    public function find(): KeyCollection
     {
         return $this->model->find($this->toXPath(), $this->toXPathSort());
     }
@@ -123,7 +116,7 @@ class Builder
      *
      * @return Model|null
      */
-    public function first()
+    public function first(): ?Model
     {
         return $this->find()->first();
     }
@@ -134,7 +127,7 @@ class Builder
      * @return Model
      * @throws ModelNotFoundException
      */
-    public function firstOrFail()
+    public function firstOrFail(): Model
     {
         $result = $this->first();
 
@@ -150,7 +143,7 @@ class Builder
      *
      * @return Model
      */
-    public function firstOrNew()
+    public function firstOrNew(): Model
     {
         return $this->first() ?: $this->model->newInstance();
     }
@@ -158,9 +151,9 @@ class Builder
     /**
      * A more "Eloquent" alias for find().
      *
-     * @return \Pace\KeyCollection
+     * @return KeyCollection
      */
-    public function get()
+    public function get(): KeyCollection
     {
         return $this->find();
     }
@@ -171,9 +164,9 @@ class Builder
      * @param string $xpath
      * @param array $values
      * @param string $boolean
-     * @return self
+     * @return $this
      */
-    public function in($xpath, array $values, $boolean = 'and')
+    public function in(string $xpath, array $values, string $boolean = 'and'): static
     {
         return $this->filter(function ($builder) use ($xpath, $values) {
             foreach ($values as $value) {
@@ -187,9 +180,9 @@ class Builder
      *
      * @param string $xpath
      * @param array $values
-     * @return self
+     * @return $this
      */
-    public function orIn($xpath, array $values)
+    public function orIn(string $xpath, array $values): static
     {
         return $this->in($xpath, $values, 'or');
     }
@@ -199,9 +192,9 @@ class Builder
      *
      * @param Closure $callback
      * @param string $boolean
-     * @return self
+     * @return $this
      */
-    public function nestedFilter(Closure $callback, $boolean = 'and')
+    public function nestedFilter(Closure $callback, string $boolean = 'and'): static
     {
         $builder = new static;
 
@@ -215,12 +208,12 @@ class Builder
     /**
      * Add an "or" filter.
      *
-     * @param string $xpath
-     * @param string $operator
+     * @param string|Closure $xpath
+     * @param mixed $operator
      * @param mixed $value
-     * @return self
+     * @return $this
      */
-    public function orFilter($xpath, $operator = null, $value = null)
+    public function orFilter(string|Closure $xpath, mixed $operator = null, mixed $value = null): static
     {
         return $this->filter($xpath, $operator, $value, 'or');
     }
@@ -231,9 +224,9 @@ class Builder
      * @param string $xpath
      * @param mixed $value
      * @param string $boolean
-     * @return self
+     * @return $this
      */
-    public function startsWith($xpath, $value = null, $boolean = 'and')
+    public function startsWith(string $xpath, mixed $value = null, string $boolean = 'and'): static
     {
         return $this->filter($xpath, 'starts-with', $value, $boolean);
     }
@@ -243,9 +236,9 @@ class Builder
      *
      * @param string $xpath
      * @param mixed $value
-     * @return self
+     * @return $this
      */
-    public function orStartsWith($xpath, $value = null)
+    public function orStartsWith(string $xpath, mixed $value = null): static
     {
         return $this->filter($xpath, 'starts-with', $value, 'or');
     }
@@ -255,9 +248,9 @@ class Builder
      *
      * @param string $xpath
      * @param bool $descending
-     * @return self
+     * @return $this
      */
-    public function sort($xpath, $descending = false)
+    public function sort(string $xpath, bool $descending = false): static
     {
         $this->sorts[] = compact('xpath', 'descending');
 
@@ -269,7 +262,7 @@ class Builder
      *
      * @return string
      */
-    public function toXPath()
+    public function toXPath(): string
     {
         $xpath = [];
 
@@ -294,7 +287,7 @@ class Builder
      *
      * @return array|null
      */
-    public function toXPathSort()
+    public function toXPathSort(): ?array
     {
         return count($this->sorts) ? ['XPathDataSort' => $this->sorts] : null;
     }
@@ -305,7 +298,7 @@ class Builder
      * @param array $filter
      * @return string
      */
-    protected function compileFilter(array $filter)
+    protected function compileFilter(array $filter): string
     {
         return sprintf('%s %s %s %s',
             $filter['boolean'], $filter['xpath'], $filter['operator'], $this->value($filter['value']));
@@ -317,7 +310,7 @@ class Builder
      * @param array $filter
      * @return string
      */
-    protected function compileFunction(array $filter)
+    protected function compileFunction(array $filter): string
     {
         return sprintf('%s %s(%s, %s)',
             $filter['boolean'], $filter['operator'], $filter['xpath'], $this->value($filter['value']));
@@ -329,7 +322,7 @@ class Builder
      * @param array $filter
      * @return string
      */
-    protected function compileNested(array $filter)
+    protected function compileNested(array $filter): string
     {
         return sprintf('%s (%s)', $filter['boolean'], $filter['builder']->toXPath());
     }
@@ -337,10 +330,10 @@ class Builder
     /**
      * Check if an operator is a valid function.
      *
-     * @param string $operator
+     * @param mixed $operator
      * @return bool
      */
-    protected function isFunction($operator)
+    protected function isFunction(mixed $operator): bool
     {
         return in_array($operator, $this->functions, true);
     }
@@ -348,10 +341,10 @@ class Builder
     /**
      * Check if an operator is a valid operator.
      *
-     * @param string $operator
+     * @param mixed $operator
      * @return bool
      */
-    protected function isOperator($operator)
+    protected function isOperator(mixed $operator): bool
     {
         return in_array($operator, $this->operators, true);
     }
@@ -362,7 +355,7 @@ class Builder
      * @param string $xpath
      * @return string
      */
-    protected function stripLeadingBoolean($xpath)
+    protected function stripLeadingBoolean(string $xpath): string
     {
         return preg_replace('/^and |^or /', '', $xpath);
     }
@@ -373,22 +366,14 @@ class Builder
      * @param mixed $value
      * @return string
      */
-    protected function value($value)
+    protected function value(mixed $value): string
     {
-        switch (true) {
-            case ($value instanceof DateTime):
-                return $this->date($value);
-
-            case (is_int($value)):
-            case (is_float($value)):
-                return (string)$value;
-
-            case (is_bool($value)):
-                return $value ? '\'true\'' : '\'false\'';
-
-            default:
-                return "\"$value\"";
-        }
+        return match (true) {
+            $value instanceof DateTime => $this->date($value),
+            is_int($value), is_float($value) => (string)$value,
+            is_bool($value) => $value ? '\'true\'' : '\'false\'',
+            default => "\"$value\"",
+        };
     }
 
     /**
@@ -397,7 +382,7 @@ class Builder
      * @param DateTime $dt
      * @return string
      */
-    protected function date(DateTime $dt)
+    protected function date(DateTime $dt): string
     {
         return $dt->format('\d\a\t\e(Y, n, j)');
     }

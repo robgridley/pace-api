@@ -2,47 +2,33 @@
 
 namespace Pace\Report;
 
-use Pace\Model;
 use InvalidArgumentException;
 use Pace\Enum\ReportExportType;
+use Pace\Model;
 use Pace\Services\ReportService;
 
 class Builder
 {
     /**
-     * The report service.
-     *
-     * @var ReportService
-     */
-    protected $service;
-
-    /**
-     * The report model.
-     *
-     * @var Model
-     */
-    protected $report;
-
-    /**
      * The base object key (if applicable).
      *
-     * @var null
+     * @var mixed
      */
-    protected $baseObjectKey = null;
+    protected mixed $baseObjectKey = null;
 
     /**
      * The report parameters.
      *
      * @var array
      */
-    protected $parameters = [];
+    protected array $parameters = [];
 
     /**
      * The report export media types.
      *
      * @var array
      */
-    protected $mediaTypes = [
+    protected array $mediaTypes = [
         ReportExportType::PDF => 'application/pdf',
         ReportExportType::RTF => 'text/rtf',
         ReportExportType::HTML => 'text/html',
@@ -59,10 +45,8 @@ class Builder
      * @param ReportService $service
      * @param Model $report
      */
-    public function __construct(ReportService $service, Model $report)
+    public function __construct(protected ReportService $service, protected Model $report)
     {
-        $this->service = $service;
-        $this->report = $report;
     }
 
     /**
@@ -72,7 +56,7 @@ class Builder
      * @param mixed $value
      * @return $this
      */
-    public function parameter(int $id, $value): self
+    public function parameter(int $id, mixed $value): self
     {
         $this->parameters[$id] = $value;
 
@@ -86,7 +70,7 @@ class Builder
      * @param mixed $value
      * @return $this
      */
-    public function namedParameter(string $name, $value): self
+    public function namedParameter(string $name, mixed $value): self
     {
         $id = $this->report->reportParameters()->filter('@name', $name)->get()->key();
 
@@ -118,7 +102,7 @@ class Builder
      * @param mixed $key
      * @return $this
      */
-    public function baseObjectKey($key): self
+    public function baseObjectKey(mixed $key): self
     {
         $this->baseObjectKey = $key instanceof Model ? $key->key() : $key;
 

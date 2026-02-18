@@ -13,7 +13,7 @@ class UpdateObject extends Service
      * @param array $attributes
      * @return array
      */
-    public function update($object, $attributes)
+    public function update(string $object, array $attributes): array
     {
         $request = [lcfirst($object) => $attributes];
 

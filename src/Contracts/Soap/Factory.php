@@ -2,6 +2,8 @@
 
 namespace Pace\Contracts\Soap;
 
+use SoapClient;
+
 interface Factory
 {
     /**
@@ -9,15 +11,15 @@ interface Factory
      *
      * @param TypeMapping $mapping
      */
-    public function addTypeMapping(TypeMapping $mapping);
+    public function addTypeMapping(TypeMapping $mapping): void;
 
     /**
      * Create a new SoapClient instance.
      *
      * @param string $wsdl
-     * @return \SoapClient
+     * @return SoapClient
      */
-    public function make($wsdl);
+    public function make(string $wsdl): SoapClient;
 
     /**
      * Set the specified SOAP client option.
@@ -25,12 +27,12 @@ interface Factory
      * @param string $key
      * @param mixed $value
      */
-    public function setOption($key, $value);
+    public function setOption(string $key, mixed $value): void;
 
     /**
      * Bulk set the specified SOAP client options.
      *
      * @param array $options
      */
-    public function setOptions(array $options);
+    public function setOptions(array $options): void;
 }

@@ -85,7 +85,7 @@ class ReportBuilderTest extends TestCase
         $builder->namedParameter('Test Parameter', '2020-01-01');
     }
 
-    private function newBuilder(MockInterface $service = null, MockInterface $report = null): Builder
+    private function newBuilder(?MockInterface $service = null, ?MockInterface $report = null): Builder
     {
         if (is_null($report)) {
             $report = Mockery::mock(Model::class);

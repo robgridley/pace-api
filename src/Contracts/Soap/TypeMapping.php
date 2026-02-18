@@ -9,14 +9,14 @@ interface TypeMapping
      *
      * @return string
      */
-    public function getTypeName();
+    public function getTypeName(): string;
 
     /**
      * Get the type namespace.
      *
      * @return string
      */
-    public function getTypeNamespace();
+    public function getTypeNamespace(): string;
 
     /**
      * Convert an XML string to a native PHP type.
@@ -24,7 +24,7 @@ interface TypeMapping
      * @param string $xml
      * @return mixed
      */
-    public function fromXml($xml);
+    public function fromXml(string $xml): mixed;
 
     /**
      * Convert a native PHP type to an XML string.
@@ -32,5 +32,5 @@ interface TypeMapping
      * @param mixed $php
      * @return string
      */
-    public function toXml($php);
+    public function toXml(mixed $php): string;
 }

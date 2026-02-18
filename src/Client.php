@@ -7,6 +7,7 @@ use InvalidArgumentException;
 use Pace\Contracts\Soap\Factory as SoapFactory;
 use Pace\InvokeAction\InvokeActionRequest;
 use Pace\Report\Builder as ReportBuilder;
+use Pace\Services\AttachmentService;
 use Pace\Soap\DateTimeMapping;
 
 class Client
@@ -21,21 +22,21 @@ class Client
      *
      * @var array
      */
-    protected $services = [];
+    protected array $services = [];
 
     /**
      * The SOAP client factory.
      *
      * @var SoapFactory
      */
-    protected $soapFactory;
+    protected SoapFactory $soapFactory;
 
     /**
      * The Pace services URL.
      *
      * @var string
      */
-    protected $url;
+    protected string $url;
 
     /**
      * Create a new instance.
@@ -46,7 +47,7 @@ class Client
      * @param string $password
      * @param string $scheme
      */
-    public function __construct(SoapFactory $soapFactory, $host, $login, $password, $scheme = 'https')
+    public function __construct(SoapFactory $soapFactory, string $host, string $login, string $password, string $scheme = 'https')
     {
         $soapFactory->setOptions(compact('login', 'password'));
         $soapFactory->addTypeMapping(new DateTimeMapping);
@@ -60,7 +61,7 @@ class Client
      *
      * @return string[]
      */
-    public function __sleep()
+    public function __sleep(): array
     {
         return ['soapFactory', 'url'];
     }
@@ -71,7 +72,7 @@ class Client
      * @param string $name
      * @return Model
      */
-    public function __get($name)
+    public function __get(string $name): Model
     {
         return $this->model(Type::modelify($name));
     }
@@ -79,9 +80,9 @@ class Client
     /**
      * Get an instance of the attachment service.
      *
-     * @return \Pace\Services\AttachmentService
+     * @return AttachmentService
      */
-    public function attachment()
+    public function attachment(): AttachmentService
     {
         return $this->service('AttachmentService');
     }
@@ -96,7 +97,7 @@ class Client
      * @param array|null $newParent
      * @return array
      */
-    public function cloneObject($object, array $attributes, array $newAttributes, $newKey = null, array $newParent = null)
+    public function cloneObject(string $object, array $attributes, array $newAttributes, mixed $newKey = null, ?array $newParent = null): array
     {
         return $this->service('CloneObject')->clone($object, $attributes, $newAttributes, $newKey, $newParent);
     }
@@ -108,7 +109,7 @@ class Client
      * @param array $attributes
      * @return array
      */
-    public function createObject($object, array $attributes)
+    public function createObject(string $object, array $attributes): array
     {
         return $this->service('CreateObject')->create($object, $attributes);
     }
@@ -119,7 +120,7 @@ class Client
      * @param string $object
      * @param int|string $key
      */
-    public function deleteObject($object, $key)
+    public function deleteObject(string $object, mixed $key): void
     {
         $this->service('DeleteObject')->delete($object, $key);
     }
@@ -132,7 +133,7 @@ class Client
      * @param array|null $sort
      * @return array
      */
-    public function findObjects($object, $filter, array $sort = null)
+    public function findObjects(string $object, string $filter, ?array $sort = null): array
     {
         if (is_null($sort)) {
             return $this->service('FindObjects')->find($object, $filter);
@@ -144,10 +145,10 @@ class Client
     /**
      * Get a model instance.
      *
-     * @param Type|string $type
+     * @param string $type
      * @return Model
      */
-    public function model($type)
+    public function model(string $type): Model
     {
         return new Model($this, $type);
     }
@@ -159,7 +160,7 @@ class Client
      * @param int|string $key
      * @return array|null
      */
-    public function readObject($object, $key)
+    public function readObject(string $object, mixed $key): ?array
     {
         return $this->service('ReadObject')->read($object, $key);
     }
@@ -170,7 +171,7 @@ class Client
      * @param Model|int $report
      * @return ReportBuilder
      */
-    public function report($report): ReportBuilder
+    public function report(Model|int $report): ReportBuilder
     {
         if (!$report instanceof Model) {
             $report = $this->model('Report')->readOrFail($report);
@@ -195,7 +196,7 @@ class Client
      * @param string $name
      * @return mixed
      */
-    public function service($name)
+    public function service(string $name): mixed
     {
         return $this->services[$name] ?? $this->services[$name] = $this->makeService($name);
     }
@@ -205,7 +206,7 @@ class Client
      *
      * @param Closure $callback
      */
-    public function transaction(Closure $callback)
+    public function transaction(Closure $callback): void
     {
         $this->service('TransactionService')->transaction($callback);
     }
@@ -215,7 +216,7 @@ class Client
      *
      * @param int $timeout
      */
-    public function startTransaction(int $timeout = 60)
+    public function startTransaction(int $timeout = 60): void
     {
         $this->service('TransactionService')->startTransaction($timeout);
     }
@@ -223,7 +224,7 @@ class Client
     /**
      * Rollback the transaction.
      */
-    public function rollbackTransaction()
+    public function rollbackTransaction(): void
     {
         $this->service('TransactionService')->rollback();
     }
@@ -231,7 +232,7 @@ class Client
     /**
      * Commit the transaction.
      */
-    public function commitTransaction()
+    public function commitTransaction(): void
     {
         $this->service('TransactionService')->commit();
     }
@@ -243,7 +244,7 @@ class Client
      * @param array $attributes
      * @return array
      */
-    public function updateObject($object, $attributes)
+    public function updateObject(string $object, array $attributes): array
     {
         return $this->service('UpdateObject')->update($object, $attributes);
     }
@@ -253,7 +254,7 @@ class Client
      *
      * @return array
      */
-    public function version()
+    public function version(): array
     {
         return $this->service('Version')->get();
     }
@@ -261,10 +262,10 @@ class Client
     /**
      * Assemble the specified service's WSDL.
      *
-     * @param $service
+     * @param string $service
      * @return string
      */
-    protected function getServiceWsdl($service)
+    protected function getServiceWsdl(string $service): string
     {
         return $this->url . $service . '?wsdl';
     }
@@ -275,7 +276,7 @@ class Client
      * @param string $service
      * @return mixed
      */
-    protected function makeService($service)
+    protected function makeService(string $service): mixed
     {
         $class = 'Pace\\Services\\' . $service;
 

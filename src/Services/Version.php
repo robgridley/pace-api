@@ -11,7 +11,7 @@ class Version extends Service
      *
      * @return array
      */
-    public function get()
+    public function get(): array
     {
         $response = $this->soap->getVersion();
 

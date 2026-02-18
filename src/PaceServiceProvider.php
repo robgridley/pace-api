@@ -2,8 +2,8 @@
 
 namespace Pace;
 
-use Pace\Soap\Factory as SoapFactory;
 use Illuminate\Support\ServiceProvider;
+use Pace\Soap\Factory as SoapFactory;
 
 class PaceServiceProvider extends ServiceProvider
 {
@@ -15,7 +15,7 @@ class PaceServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->publishes([
-            __DIR__.'/../config/pace.php' => config_path('pace.php'),
+            __DIR__ . '/../config/pace.php' => config_path('pace.php'),
         ]);
     }
 

@@ -11,7 +11,7 @@ class SoapClient extends PhpSoapClient
      *
      * @var array
      */
-    protected static $middleware = [];
+    protected static array $middleware = [];
 
     /**
      * Add the specified middleware.
@@ -19,7 +19,7 @@ class SoapClient extends PhpSoapClient
      * @param string $name
      * @param callable $callable
      */
-    public static function addMiddleware(string $name, callable $callable)
+    public static function addMiddleware(string $name, callable $callable): void
     {
         static::$middleware[$name] = $callable;
     }
@@ -29,7 +29,7 @@ class SoapClient extends PhpSoapClient
      *
      * @param string $name
      */
-    public static function removeMiddleware(string $name)
+    public static function removeMiddleware(string $name): void
     {
         unset(static::$middleware[$name]);
     }
@@ -41,21 +41,21 @@ class SoapClient extends PhpSoapClient
      * @param array $arguments
      * @return mixed
      */
-    public function __call($function, $arguments)
+    public function __call(string $function, array $arguments): mixed
     {
         $this->applyMiddleware();
 
-        return parent::__call($function, $arguments);
+        return parent::__soapCall($function, $arguments);
     }
 
     /**
      * Apply the middleware.
      */
-    protected function applyMiddleware()
+    protected function applyMiddleware(): void
     {
         $headers = [];
 
-        foreach(static::$middleware as $middleware) {
+        foreach (static::$middleware as $middleware) {
             $headers = $middleware($headers);
         }
 

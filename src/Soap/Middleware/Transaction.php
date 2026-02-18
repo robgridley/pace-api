@@ -7,20 +7,12 @@ use SoapHeader;
 class Transaction
 {
     /**
-     * The transaction ID.
-     *
-     * @var string
-     */
-    protected $id;
-
-    /**
      * Create a new middleware instance.
      *
      * @param string $id
      */
-    public function __construct(string $id)
+    public function __construct(protected string $id)
     {
-        $this->id = $id;
     }
 
     /**

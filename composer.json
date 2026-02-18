@@ -11,6 +11,7 @@
     "require": {
         "php": "^8.1",
         "ext-fileinfo": "*",
+        "ext-simplexml": "*",
         "ext-soap": "*",
         "nesbot/carbon": "^2.0|^3.0",
         "doctrine/inflector": "^2.1"

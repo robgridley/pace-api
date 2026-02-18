@@ -13,7 +13,7 @@ class FindObjects extends Service
      * @param string $filter
      * @return array
      */
-    public function find($object, $filter)
+    public function find(string $object, string $filter): array
     {
         $request = ['in0' => $object, 'in1' => $filter];
 
@@ -30,7 +30,7 @@ class FindObjects extends Service
      * @param array $sort
      * @return array
      */
-    public function findAndSort($object, $filter, array $sort)
+    public function findAndSort(string $object, string $filter, array $sort): array
     {
         $request = ['in0' => $object, 'in1' => $filter, 'in2' => $sort];
 

@@ -2,7 +2,7 @@
 
 namespace Pace\Enum;
 
-final class ReportExportType
+enum ReportExportType: int
 {
     const PDF = 2;
     const RTF = 3;

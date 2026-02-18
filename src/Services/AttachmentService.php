@@ -11,13 +11,13 @@ class AttachmentService extends Service
      * Add a new attachment to the vault.
      *
      * @param string $object
-     * @param mixed $key
+     * @param string|int $key
      * @param string|null $field
      * @param string $name
      * @param string $content
      * @return string
      */
-    public function add($object, $key, $field, $name, $content)
+    public function add(string $object, mixed $key, ?string $field, string $name, string $content): string
     {
         $attachment = [
             'name' => $name,
@@ -44,7 +44,7 @@ class AttachmentService extends Service
      * @param string $key
      * @return array
      */
-    public function getByKey($key)
+    public function getByKey(string $key): array
     {
         $request = ['in0' => $key];
 
@@ -61,7 +61,7 @@ class AttachmentService extends Service
      *
      * @param string $key
      */
-    public function removeByKey($key)
+    public function removeByKey(string $key): void
     {
         $request = ['in0' => $key];
 
@@ -75,7 +75,7 @@ class AttachmentService extends Service
      * @param string $content
      * @return string
      */
-    protected function guessMimeType($name, $content)
+    protected function guessMimeType(string $name, string $content): string
     {
         $finfo = new Finfo(FILEINFO_MIME_TYPE);
 

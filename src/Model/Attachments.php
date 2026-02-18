@@ -3,6 +3,8 @@
 namespace Pace\Model;
 
 use BadMethodCallException;
+use Pace\Model;
+use Pace\XPath\Builder;
 
 trait Attachments
 {
@@ -12,10 +14,10 @@ trait Attachments
      * @param string $name
      * @param string $content
      * @param string|null $field
-     * @param int|string|null $keyName
-     * @return \Pace\Model
+     * @param string|null $keyName
+     * @return Model
      */
-    public function attachFile($name, $content, $field = null, $keyName = null)
+    public function attachFile(string $name, string $content, ?string $field = null, ?string $keyName = null): Model
     {
         $key = $this->client->attachment()->add($this->type, $this->key($keyName), $field, $name, $content);
 
@@ -25,9 +27,9 @@ trait Attachments
     /**
      * The file attachments relationship.
      *
-     * @return \Pace\XPath\Builder
+     * @return Builder
      */
-    public function fileAttachments()
+    public function fileAttachments(): Builder
     {
         return $this->morphMany('FileAttachment');
     }
@@ -37,7 +39,7 @@ trait Attachments
      *
      * @return string
      */
-    public function getContent()
+    public function getContent(): string
     {
         if ($this->type !== 'FileAttachment') {
             throw new BadMethodCallException('Call to method which only exists on FileAttachment');

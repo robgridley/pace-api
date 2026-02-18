@@ -13,7 +13,7 @@ class CreateObject extends Service
      * @param array $attributes
      * @return array
      */
-    public function create($object, array $attributes)
+    public function create(string $object, array $attributes): array
     {
         $request = [lcfirst($object) => $attributes];
 

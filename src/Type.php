@@ -2,6 +2,7 @@
 
 namespace Pace;
 
+use Doctrine\Inflector\Inflector;
 use Doctrine\Inflector\InflectorFactory;
 
 class Type
@@ -11,7 +12,7 @@ class Type
      *
      * @var array
      */
-    protected static $irregularNames = [
+    protected static array $irregularNames = [
         'apSetup' => 'APSetup',
         'arSetup' => 'ARSetup',
         'crmSetup' => 'CRMSetup',
@@ -58,16 +59,16 @@ class Type
      *
      * @var array
      */
-    protected static $irregularKeys = [
+    protected static array $irregularKeys = [
         'FileAttachment' => 'attachment',
     ];
 
     /**
      * The Doctrine Inflector instance.
      *
-     * @var \Doctrine\Inflector\Inflector|null
+     * @var Inflector|null
      */
-    protected static $inflector;
+    protected static ?Inflector $inflector = null;
 
     /**
      * Convert a name to camel case.
@@ -75,7 +76,7 @@ class Type
      * @param string $name
      * @return string
      */
-    public static function camelize($name)
+    public static function camelize(string $name): string
     {
         return array_search($name, static::$irregularNames) ?: lcfirst($name);
     }
@@ -86,7 +87,7 @@ class Type
      * @param string $name
      * @return string
      */
-    public static function modelify($name)
+    public static function modelify(string $name): string
     {
         return array_search($name, array_flip(static::$irregularNames)) ?: ucfirst($name);
     }
@@ -97,7 +98,7 @@ class Type
      * @param string $name
      * @return string
      */
-    public static function singularize($name)
+    public static function singularize(string $name): string
     {
         if (is_null(static::$inflector)) {
             static::$inflector = InflectorFactory::create()->build();
@@ -112,7 +113,7 @@ class Type
      * @param string $type
      * @return string|null
      */
-    public static function keyName($type)
+    public static function keyName(string $type): ?string
     {
         if (array_key_exists($type, static::$irregularKeys)) {
             return static::$irregularKeys[$type];

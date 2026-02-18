@@ -16,7 +16,7 @@ class CloneObject extends Service
      * @param array|null $newParent
      * @return array
      */
-    public function clone($object, array $attributes, array $newAttributes, $newKey = null, array $newParent = null)
+    public function clone(string $object, array $attributes, array $newAttributes, mixed $newKey = null, array $newParent = null): array
     {
         $request = [
             $object => $attributes,

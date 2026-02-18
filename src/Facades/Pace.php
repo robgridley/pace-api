@@ -2,8 +2,8 @@
 
 namespace Pace\Facades;
 
-use Pace\Client;
 use Illuminate\Support\Facades\Facade;
+use Pace\Client;
 
 class Pace extends Facade
 {

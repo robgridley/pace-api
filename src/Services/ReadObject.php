@@ -2,9 +2,9 @@
 
 namespace Pace\Services;
 
-use SoapFault;
 use Pace\Client;
 use Pace\Service;
+use SoapFault;
 
 class ReadObject extends Service
 {
@@ -16,7 +16,7 @@ class ReadObject extends Service
      * @return array|null
      * @throws SoapFault if an unexpected SOAP error occurs.
      */
-    public function read($object, $key)
+    public function read(string $object, mixed $key): ?array
     {
         $request = [lcfirst($object) => [Client::PRIMARY_KEY => $key]];
 
@@ -39,7 +39,7 @@ class ReadObject extends Service
      * @param SoapFault $exception
      * @return bool
      */
-    protected function isObjectNotFound(SoapFault $exception)
+    protected function isObjectNotFound(SoapFault $exception): bool
     {
         return strpos($exception->getMessage(), 'Unable to locate object') === 0;
     }

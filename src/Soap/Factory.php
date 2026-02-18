@@ -2,8 +2,8 @@
 
 namespace Pace\Soap;
 
-use Pace\Contracts\Soap\TypeMapping;
 use Pace\Contracts\Soap\Factory as FactoryContract;
+use Pace\Contracts\Soap\TypeMapping;
 
 class Factory implements FactoryContract
 {
@@ -12,21 +12,21 @@ class Factory implements FactoryContract
      *
      * @var array
      */
-    protected $options = [];
+    protected array $options = [];
 
     /**
      * Type mappings.
      *
      * @var array
      */
-    protected $types = [];
+    protected array $types = [];
 
     /**
      * Add a new SOAP to PHP type mapping.
      *
      * @param TypeMapping $mapping
      */
-    public function addTypeMapping(TypeMapping $mapping)
+    public function addTypeMapping(TypeMapping $mapping): void
     {
         $this->types[$mapping->getTypeNamespace() . ':' . $mapping->getTypeName()] = $mapping;
     }
@@ -37,7 +37,7 @@ class Factory implements FactoryContract
      * @param string $wsdl
      * @return SoapClient
      */
-    public function make($wsdl)
+    public function make(string $wsdl): SoapClient
     {
         return new SoapClient($wsdl, $this->getOptions());
     }
@@ -48,7 +48,7 @@ class Factory implements FactoryContract
      * @param string $key
      * @param mixed $value
      */
-    public function setOption($key, $value)
+    public function setOption(string $key, mixed $value): void
     {
         $this->options[$key] = $value;
     }
@@ -58,7 +58,7 @@ class Factory implements FactoryContract
      *
      * @param array $options
      */
-    public function setOptions(array $options)
+    public function setOptions(array $options): void
     {
         foreach ($options as $key => $value) {
             $this->setOption($key, $value);
@@ -70,7 +70,7 @@ class Factory implements FactoryContract
      *
      * @return array
      */
-    protected function getOptions()
+    protected function getOptions(): array
     {
         return array_merge($this->options, [
             'typemap' => $this->getTypeMappings()
@@ -83,7 +83,7 @@ class Factory implements FactoryContract
      * @param TypeMapping $type
      * @return array
      */
-    protected function getTypeMapping(TypeMapping $type)
+    protected function getTypeMapping(TypeMapping $type): array
     {
         return [
             'type_name' => $type->getTypeName(),
@@ -102,7 +102,7 @@ class Factory implements FactoryContract
      *
      * @return array
      */
-    protected function getTypeMappings()
+    protected function getTypeMappings(): array
     {
         $types = [];
 

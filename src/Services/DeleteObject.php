@@ -12,7 +12,7 @@ class DeleteObject extends Service
      * @param string $object
      * @param int|string $key
      */
-    public function delete($object, $key)
+    public function delete(string $object, mixed $key): void
     {
         $request = ['in0' => $object, 'in1' => $key];
 

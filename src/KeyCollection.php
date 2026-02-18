@@ -2,35 +2,21 @@
 
 namespace Pace;
 
-use Iterator;
-use Countable;
 use ArrayAccess;
+use Countable;
+use Iterator;
 use JsonSerializable;
-use RuntimeException;
 use OutOfBoundsException;
+use RuntimeException;
 
 class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializable
 {
-    /**
-     * The keys as returned by a find.
-     *
-     * @var array
-     */
-    protected $keys = [];
-
-    /**
-     * The model the keys belong to.
-     *
-     * @var Model
-     */
-    protected $model;
-
     /**
      * Cached reads.
      *
      * @var array
      */
-    protected $readModels = [];
+    protected array $readModels = [];
 
     /**
      * Create a new key collection instance.
@@ -38,10 +24,8 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      * @param Model $model
      * @param array $keys
      */
-    public function __construct(Model $model, array $keys)
+    public function __construct(protected Model $model, protected array $keys)
     {
-        $this->model = $model;
-        $this->keys = $keys;
     }
 
     /**
@@ -49,7 +33,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      *
      * @return string
      */
-    public function __toString()
+    public function __toString(): string
     {
         return json_encode($this);
     }
@@ -59,7 +43,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      *
      * @return Model[]
      */
-    public function all()
+    public function all(): array
     {
         return iterator_to_array($this);
     }
@@ -69,7 +53,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      *
      * @return int
      */
-    public function count()
+    public function count(): int
     {
         return count($this->keys);
     }
@@ -77,9 +61,9 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
     /**
      * Read the current key.
      *
-     * @return Model
+     * @return Model|null
      */
-    public function current()
+    public function current(): ?Model
     {
         return $this->read($this->key());
     }
@@ -90,9 +74,9 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      * @param mixed $keys
      * @return KeyCollection
      */
-    public function diff($keys)
+    public function diff(mixed $keys): static
     {
-        return $this->fresh(array_diff($this->keys, ($keys instanceof self) ? $keys->keys() : (array)$keys));
+        return $this->fresh(array_diff($this->keys, ($keys instanceof static) ? $keys->keys() : (array)$keys));
     }
 
     /**
@@ -101,7 +85,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      * @param callable $callback
      * @return KeyCollection
      */
-    public function filterKeys(callable $callback)
+    public function filterKeys(callable $callback): static
     {
         return $this->fresh(array_values(array_filter($this->keys, $callback)));
     }
@@ -109,9 +93,9 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
     /**
      * Read only the first key.
      *
-     * @return Model
+     * @return Model|null
      */
-    public function first()
+    public function first(): ?Model
     {
         $key = reset($this->keys);
 
@@ -122,10 +106,10 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      * Get the model for the specified key.
      *
      * @param string|int $key
-     * @return Model
+     * @return Model|null
      * @throws OutOfBoundsException if the key does not exist.
      */
-    public function get($key)
+    public function get(mixed $key): ?Model
     {
         if (!$this->has($key)) {
             throw new OutOfBoundsException("The key '$key' does not exist");
@@ -140,7 +124,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      * @param mixed $key
      * @return bool
      */
-    public function has($key)
+    public function has(mixed $key): bool
     {
         return in_array($key, $this->keys, true);
     }
@@ -150,7 +134,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      *
      * @return bool
      */
-    public function isEmpty()
+    public function isEmpty(): bool
     {
         return empty($this->keys);
     }
@@ -160,7 +144,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      *
      * @return array
      */
-    function jsonSerialize()
+    function jsonSerialize(): array
     {
         return $this->all();
     }
@@ -170,7 +154,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      *
      * @return mixed
      */
-    public function key()
+    public function key(): mixed
     {
         return current($this->keys);
     }
@@ -180,7 +164,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      *
      * @return array
      */
-    public function keys()
+    public function keys(): array
     {
         return $this->keys;
     }
@@ -188,9 +172,9 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
     /**
      * Read only the last key.
      *
-     * @return Model
+     * @return Model|null
      */
-    public function last()
+    public function last(): ?Model
     {
         $keys = array_reverse($this->keys);
 
@@ -200,9 +184,9 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
     /**
      * Move forward to the next key.
      */
-    public function next()
+    public function next(): void
     {
-         next($this->keys);
+        next($this->keys);
     }
 
     /**
@@ -211,7 +195,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      * @param mixed $key
      * @return bool
      */
-    public function offsetExists($key)
+    public function offsetExists(mixed $key): bool
     {
         return $this->has($key);
     }
@@ -220,9 +204,9 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      * Read the specified key.
      *
      * @param mixed $key
-     * @return Model
+     * @return Model|null
      */
-    public function offsetGet($key)
+    public function offsetGet(mixed $key): ?Model
     {
         return $this->get($key);
     }
@@ -234,7 +218,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      * @param mixed $value
      * @throws RuntimeException
      */
-    public function offsetSet($key, $value)
+    public function offsetSet(mixed $key, mixed $value): void
     {
         $class = get_class($this);
 
@@ -247,7 +231,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      * @param mixed $key
      * @throws RuntimeException
      */
-    public function offsetUnset($key)
+    public function offsetUnset(mixed $key): void
     {
         $class = get_class($this);
 
@@ -261,7 +245,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      * @param int $perPage
      * @return KeyCollection
      */
-    public function paginate($page, $perPage = 25)
+    public function paginate(int $page, int $perPage = 25): static
     {
         $offset = max($page - 1, 0) * $perPage;
 
@@ -272,10 +256,10 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      * Get the values of a given key.
      *
      * @param string $value
-     * @param string $key
+     * @param string|null $key
      * @return array
      */
-    public function pluck($value, $key = null)
+    public function pluck(string $value, ?string $key = null): array
     {
         $models = $this->all();
         $results = [];
@@ -294,7 +278,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
     /**
      * Rewind to the first key.
      */
-    public function rewind()
+    public function rewind(): void
     {
         reset($this->keys);
     }
@@ -303,10 +287,10 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      * Add a portion of the keys to a new collection.
      *
      * @param int $offset
-     * @param int $length
+     * @param int|null $length
      * @return KeyCollection
      */
-    public function slice($offset, $length = null)
+    public function slice(int $offset, ?int $length = null): static
     {
         return $this->fresh(array_slice($this->keys, $offset, $length));
     }
@@ -316,7 +300,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      *
      * @return bool
      */
-    public function valid()
+    public function valid(): bool
     {
         return $this->key() !== false;
     }
@@ -327,7 +311,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      * @param array $keys
      * @return KeyCollection
      */
-    protected function fresh(array $keys)
+    protected function fresh(array $keys): static
     {
         return new static($this->model, $keys);
     }
@@ -338,7 +322,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      * @param mixed $key
      * @return Model|null
      */
-    protected function read($key)
+    protected function read(mixed $key): ?Model
     {
         if ($key === false) {
             return null;

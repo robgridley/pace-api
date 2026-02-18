@@ -7,29 +7,13 @@ use finfo;
 class File
 {
     /**
-     * The file's content.
-     *
-     * @var string
-     */
-    protected $content;
-
-    /**
-     * The file's media type.
-     *
-     * @var string|null
-     */
-    protected $mediaType;
-
-    /**
      * Create a new file instance.
      *
      * @param string $content
      * @param string|null $mediaType
      */
-    public function __construct(string $content, string $mediaType = null)
+    public function __construct(protected string $content, protected ?string $mediaType = null)
     {
-        $this->content = $content;
-        $this->mediaType = $mediaType;
     }
 
     /**
@@ -39,7 +23,7 @@ class File
      * @param string|null $mediaType
      * @return static
      */
-    public static function fromBase64(string $content, string $mediaType = null): self
+    public static function fromBase64(string $content, ?string $mediaType = null): self
     {
         return new static(base64_decode($content), $mediaType);
     }
