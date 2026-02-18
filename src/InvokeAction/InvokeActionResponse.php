@@ -38,7 +38,10 @@ class InvokeActionResponse implements ArrayAccess, JsonSerializable
      */
     public function toModel(string $type): Model
     {
-        return $this->client->model($type)->newInstance($this->response);
+        $model = $this->client->model($type)->newInstance($this->response);
+        $model->exists = true;
+
+        return $model;
     }
 
     /**
