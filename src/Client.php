@@ -4,9 +4,10 @@ namespace Pace;
 
 use Closure;
 use InvalidArgumentException;
-use Pace\Soap\DateTimeMapping;
-use Pace\Report\Builder as ReportBuilder;
 use Pace\Contracts\Soap\Factory as SoapFactory;
+use Pace\InvokeAction\InvokeActionRequest;
+use Pace\Report\Builder as ReportBuilder;
+use Pace\Soap\DateTimeMapping;
 
 class Client
 {
@@ -176,6 +177,16 @@ class Client
         }
 
         return new ReportBuilder($this->service('ReportService'), $report);
+    }
+
+    /**
+     * Get an invoke action request instance.
+     *
+     * @return InvokeActionRequest
+     */
+    public function invokeAction(): InvokeActionRequest
+    {
+        return new InvokeActionRequest($this, $this->service('InvokeAction'));
     }
 
     /**
