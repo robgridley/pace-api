@@ -10,6 +10,8 @@ Install via [Composer](http://getcomposer.org/):
 $ composer require robgridley/pace-api
 ```
 
+PHP 8.1+ with the SOAP, SimpleXML and Fileinfo extensions required.
+
 ## Testing
 
 PHPUnit tests with 100% code coverage for `Model`, `KeyCollection` and `XPath\Builder` classes.
@@ -407,6 +409,53 @@ $pace->report(100)
     ->baseObjectKey('90000')
     ->namedParameter('Include Kit Detail', 'N')
     ->print();
+```
+
+## Invoke Action
+
+The invoke action service methods are exposed as PHP methods. You can find a list of methods and their arguments in the InvokeAction.wsdl file provided with the Pace SDK. Arguments must be passed in the order specified in the WSDL.
+
+```php
+$estimate = $pace->model('Estimate')->read(100000);
+$pace->invokeAction()->calculateEstimate($estimate);
+```
+
+You can also use named arguments to pass the arguments out of order, or you can mix ordered and named arguments.
+
+```php
+$poLine = $pace->model('PurchaseOrder')->read(50000)->purchaseOrderLines()->first();
+$pace->invokeAction()->receivePurchaseOrderLine($poLine, Carbon::now(), in3: 'Receiving note.', in5: 1);
+```
+
+If the method requires a complex type, you will need to pass an array.
+
+If one of the arguments is an instance of a model, it will automatically be converted to a complex type containing the model's primary key. The two examples above make use of this feature. Additionally, if your complex type array contains a model, it will automatically be converted to the model's primary key.
+
+```php
+$productType = $pace->model('JobProductType')->read('FL');
+$result = $pace->invokeAction()->createEstimate([
+    'customer' => 'HOUSE',
+    'estimateDescription' => 'Testing',
+    'estimatePartInfo' => [
+        'product' => $productType,
+        'quantity1' => 100,
+        'finalSizeW' => 8.5,
+        'finalSizeH' => 11,
+        'colorsSide1' => 4,
+        'colorsSide2' => 0,
+        'totalColors' => 4,
+        'eachOf' => 1,
+        'grainSpecifications' => 1,
+    ],
+]);
+```
+
+Finally, the result of the invoke action call can be accessed like an array, converted to an array, or converted to a model (if the method returns the matching complex type).
+
+```php
+$result['estimateNumber']; // returns the estimate number
+$result->toArray(); // returns an array
+$result->toModel('Estimate'); // returns an estimate model
 ```
 
 ## Version
