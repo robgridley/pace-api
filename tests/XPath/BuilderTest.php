@@ -1,10 +1,10 @@
 <?php
 
-use Pace\Model;
 use Pace\KeyCollection;
+use Pace\Model;
+use Pace\ModelNotFoundException;
 use Pace\XPath\Builder;
 use PHPUnit\Framework\TestCase;
-use Pace\ModelNotFoundException;
 
 class BuilderTest extends TestCase
 {
@@ -102,13 +102,38 @@ class BuilderTest extends TestCase
         );
     }
 
+    public function testLoadingFields()
+    {
+        $builder = new Builder();
+        $builder->load([
+            '@description',
+            'description_2' => '@description2',
+        ]);
+        $this->assertEquals(
+            [
+                [
+                    'name' => 'description',
+                    'xpath' => '@description',
+                ],
+                [
+                    'name' => 'description_2',
+                    'xpath' => '@description2',
+                ],
+            ],
+            $builder->toFieldDescriptor()
+        );
+    }
+
     public function testFind()
     {
         $model = Mockery::mock(Model::class);
         $collection = Mockery::mock(KeyCollection::class);
-        $model->shouldReceive('find')->with("@active = 'true'", null)->once()->andReturn($collection);
         $model->shouldReceive('find')
-            ->with("@active = 'true'", ['XPathDataSort' => [['xpath' => '@name', 'descending' => false]]])
+            ->with("@active = 'true'", null, 0, null, [])
+            ->once()
+            ->andReturn($collection);
+        $model->shouldReceive('find')
+            ->with("@active = 'true'", ['XPathDataSort' => [['xpath' => '@name', 'descending' => false]]], 0, null, [])
             ->once()
             ->andReturn($collection);
         $builder = new Builder($model);

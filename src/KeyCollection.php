@@ -29,6 +29,40 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
     }
 
     /**
+     * Create a new key collection instance from an array of value objects.
+     *
+     * @param Model $model
+     * @param array $valueObjects
+     * @return static
+     */
+    public static function fromValueObjects(Model $model, array $valueObjects): static
+    {
+        $keys = array_map(fn(object $valueObject) => $valueObject->primaryKey, $valueObjects);
+        $readModels = array_combine(
+            $keys,
+            array_map(function (object $valueObject) use ($model) {
+                $fields = $valueObject->fields->ValueField;
+                $fields = is_array($fields) ? $fields : [$fields];
+                $attributes = array_combine(
+                    array_map(fn(object $field) => $field->name, $fields),
+                    array_map(fn(object $field) => $field->value, $fields)
+                );
+                $attributes['primaryKey'] = $valueObject->primaryKey;
+
+                $readModel = $model->newInstance($attributes);
+                $readModel->exists = true;
+
+                return $readModel;
+            }, $valueObjects)
+        );
+
+        $collection = new static($model, $keys);
+        $collection->readModels = $readModels;
+
+        return $collection;
+    }
+
+    /**
      * Convert this instance to its string representation.
      *
      * @return string
@@ -146,7 +180,7 @@ class KeyCollection implements ArrayAccess, Countable, Iterator, JsonSerializabl
      */
     function jsonSerialize(): array
     {
-        return $this->all();
+        return array_map(fn($value) => $value instanceof JsonSerializable ? $value->jsonSerialize() : $value, $this->all());
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace Pace;
 
+use BadMethodCallException;
 use Closure;
 use InvalidArgumentException;
 use Pace\Contracts\Soap\Factory as SoapFactory;
@@ -131,15 +132,33 @@ class Client
      * @param string $object
      * @param string $filter
      * @param array|null $sort
+     * @param int|null $offset
+     * @param int|null $limit
+     * @param array $fields
      * @return array
      */
-    public function findObjects(string $object, string $filter, ?array $sort = null): array
+    public function findObjects(string $object, string $filter, ?array $sort = null, ?int $offset = null, ?int $limit = null, array $fields = []): array
     {
-        if (is_null($sort)) {
-            return $this->service('FindObjects')->find($object, $filter);
+        if (!empty($fields)) {
+            if (is_null($offset) || is_null($limit)) {
+                throw new BadMethodCallException('Offset and limit are required when fields is not empty.');
+            }
+
+            // I think this is a bug in the Pace SOAP API? This method always returns limit + 1.
+            $limit -= 1;
+
+            return $this->service('FindObjects')->loadValueObjects($object, $filter, $sort, $offset, $limit, $fields);
         }
 
-        return $this->service('FindObjects')->findAndSort($object, $filter, $sort);
+        if (!is_null($limit)) {
+            return $this->service('FindObjects')->findSortAndLimit($object, $filter, $sort, $offset, $limit);
+        }
+
+        if (!is_null($sort)) {
+            return $this->service('FindObjects')->findAndSort($object, $filter, $sort);
+        }
+
+        return $this->service('FindObjects')->find($object, $filter);
     }
 
     /**

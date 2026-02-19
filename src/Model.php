@@ -195,11 +195,23 @@ class Model implements ArrayAccess, JsonSerializable
      *
      * @param string $filter
      * @param array|null $sort
+     * @param int|null $offset
+     * @param int|null $limit
+     * @param array $fields
      * @return KeyCollection
      */
-    public function find(string $filter, ?array $sort = null): KeyCollection
+    public function find(string $filter, ?array $sort = null, ?int $offset = null, ?int $limit = null, array $fields = []): KeyCollection
     {
-        $keys = $this->client->findObjects($this->type, $filter, $sort);
+        if (!empty($fields)) {
+            if (is_null($offset)) {
+                $offset = 0;
+            }
+            if (is_null($limit)) {
+                $limit = 1000;
+            }
+        }
+
+        $keys = $this->client->findObjects($this->type, $filter, $sort, $offset, $limit, $fields);
 
         return $this->newKeyCollection($keys);
     }
@@ -657,6 +669,13 @@ class Model implements ArrayAccess, JsonSerializable
      */
     protected function newKeyCollection(array $keys): KeyCollection
     {
+        foreach ($keys as $key) {
+            if (is_object($key)) {
+                return KeyCollection::fromValueObjects($this, $keys);
+            }
+            break;
+        }
+
         return new KeyCollection($this, $keys);
     }
 

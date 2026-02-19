@@ -122,7 +122,7 @@ class ModelTest extends TestCase
         $builder = $model->hasMany('JobPart', 'job');
         $this->assertInstanceOf(Builder::class, $builder);
         $collection = Mockery::mock(KeyCollection::class);
-        $related->shouldReceive('find')->with('@job = "12345"', null)->once()->andReturn($collection);
+        $related->shouldReceive('find')->with('@job = "12345"', null, 0, null, [])->once()->andReturn($collection);
         $this->assertInstanceOf(KeyCollection::class, $builder->get());
     }
 
@@ -138,7 +138,7 @@ class ModelTest extends TestCase
         $this->assertInstanceOf(Builder::class, $builder);
         $collection = Mockery::mock(KeyCollection::class);
         $related->shouldReceive('find')
-            ->with('@job = "12345" and @jobPart = "01"', null)
+            ->with('@job = "12345" and @jobPart = "01"', null, 0, null, [])
             ->once()
             ->andReturn($collection);
         $this->assertInstanceOf(KeyCollection::class, $builder->get());
@@ -156,7 +156,7 @@ class ModelTest extends TestCase
         $this->assertInstanceOf(Builder::class, $builder);
         $collection = Mockery::mock(KeyCollection::class);
         $related->shouldReceive('find')
-            ->with('@baseObject = "Job" and @baseObjectKey = "12345"', null)
+            ->with('@baseObject = "Job" and @baseObjectKey = "12345"', null, 0, null, [])
             ->once()
             ->andReturn($collection);
         $this->assertInstanceOf(KeyCollection::class, $builder->get());
@@ -404,7 +404,7 @@ class ModelTest extends TestCase
         $client = Mockery::mock(Client::class);
         $model = new Model($client, 'CSR');
         $client->shouldReceive('findObjects')
-            ->with('CSR', "@active = 'true'", null)
+            ->with('CSR', "@active = 'true'", null, 0, null, [])
             ->once()
             ->andReturn([1, 4, 9]);
         $keys = $model->find("@active = 'true'");

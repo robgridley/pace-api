@@ -170,6 +170,40 @@ $jobs = $pace->job
 	->find();
 ```
 
+### Limiting
+
+Use the `offset()` and `limit()` methods to limit your results. The default offset is 0 if it is not specified.
+
+```php
+$jobs = $pace->job
+	->filter('adminStatus/@openJob', true)
+	->sort('@dateSetup', true)
+	->limit(50)
+	->find();
+```
+
+You can also use the `paginate()` method to set the offset and limit for a page.
+
+```php
+$jobs = $pace->job
+	->filter('adminStatus/@openJob', true)
+	->sort('@dateSetup', true)
+	->paginate(1, 50)
+	->find();
+```
+
+### Eager loading
+
+The `load()` method preloads the models as part of the find request, using the find object aggregate service. It does not read the entire object; you must specify a list of fields in XPath. If the offset and limit are not specified, then 0 and 1,000 will be used by default.
+
+```php
+$employees = $pace->model('Employee')->filter('@status', 'A')->load([
+    '@firstName',
+    '@lastName',
+    'department' => 'department/@description',
+])->find();
+```
+
 ## Dates
 
 Dates are automatically converted to and from [Carbon](http://carbon.nesbot.com/) instances. Check out the `Soap\DateTimeMapper` and `Soap\Factory` classes if you want to see how this happens.

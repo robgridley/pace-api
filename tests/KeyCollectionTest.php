@@ -99,10 +99,10 @@ class KeyCollectionTest extends TestCase
         $model = Mockery::mock(Model::class);
         $collection = new KeyCollection($model, [5]);
         $model->shouldReceive('read')->with(5)->once()->andReturnSelf();
+        $model->shouldReceive('jsonSerialize')->once()->andReturn([]);
         $array = $collection->jsonSerialize();
         $this->assertInstanceOf('JsonSerializable', $collection);
         $this->assertIsArray($array);
-        $this->assertContainsOnlyInstancesOf('JsonSerializable', $array);
     }
 
     public function testArrayAccess()

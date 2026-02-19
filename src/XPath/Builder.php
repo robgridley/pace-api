@@ -40,6 +40,27 @@ class Builder
     protected array $sorts = [];
 
     /**
+     * The fields to load.
+     *
+     * @var array
+     */
+    protected array $fields = [];
+
+    /**
+     * The result offset.
+     *
+     * @var int
+     */
+    protected int $offset = 0;
+
+    /**
+     * The results limit.
+     *
+     * @var int|null
+     */
+    protected ?int $limit = null;
+
+    /**
      * Create a new instance.
      *
      * @param Model|null $model
@@ -108,7 +129,7 @@ class Builder
      */
     public function find(): KeyCollection
     {
-        return $this->model->find($this->toXPath(), $this->toXPathSort());
+        return $this->model->find($this->toXPath(), $this->toXPathSort(), $this->offset, $this->limit, $this->toFieldDescriptor());
     }
 
     /**
@@ -156,6 +177,64 @@ class Builder
     public function get(): KeyCollection
     {
         return $this->find();
+    }
+
+    /**
+     * Load the specified fields.
+     *
+     * @param array $fields
+     * @return $this
+     */
+    public function load(array $fields): static
+    {
+        foreach ($fields as $key => $xpath) {
+            if (is_int($key)) {
+                $key = ltrim($xpath, '@');
+            }
+            $this->fields[$key] = $xpath;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Set the result offset.
+     *
+     * @param int $offset
+     * @return $this
+     */
+    public function offset(int $offset): static
+    {
+        $this->offset = $offset;
+
+        return $this;
+    }
+
+    /**
+     * Set the results limit.
+     *
+     * @param int $limit
+     * @return $this
+     */
+    public function limit(int $limit): static
+    {
+        $this->limit = $limit;
+
+        return $this;
+    }
+
+    /**
+     * Paginate the results.
+     *
+     * @param int $page
+     * @param int $perPage
+     * @return $this
+     */
+    public function paginate(int $page, int $perPage = 25): static
+    {
+        $offset = max($page - 1, 0) * $perPage;
+
+        return $this->offset($offset)->limit($perPage);
     }
 
     /**
@@ -290,6 +369,21 @@ class Builder
     public function toXPathSort(): ?array
     {
         return count($this->sorts) ? ['XPathDataSort' => $this->sorts] : null;
+    }
+
+    /**
+     * Get the field descriptor array.
+     *
+     * @return array
+     */
+    public function toFieldDescriptor(): array
+    {
+        return array_map(function (string $name, string $xpath) {
+            return [
+                'name' => $name,
+                'xpath' => $xpath,
+            ];
+        }, array_keys($this->fields), array_values($this->fields));
     }
 
     /**
