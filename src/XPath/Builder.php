@@ -139,7 +139,7 @@ class Builder
      */
     public function first(): ?Model
     {
-        return $this->find()->first();
+        return $this->model->find($this->toXPath(), $this->toXPathSort(), 0, 1, $this->toFieldDescriptor())->first();
     }
 
     /**

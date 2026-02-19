@@ -225,7 +225,7 @@ foreach ($estimates as $estimate) {
 }
 ```
 
-KeyCollection also has a number of useful methods such as `all()`, `paginate()` and `first()`. In fact, the single object find example from earlier is just a shortcut to the `KeyCollection::first()` method.
+KeyCollection also has a number of useful methods such as `all()`, `paginate()` and `first()`.
 
 ## Relationships
 
